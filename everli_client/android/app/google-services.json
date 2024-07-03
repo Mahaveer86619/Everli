@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "688702325103",
+    "project_id": "everli-4fc72",
+    "storage_bucket": "everli-4fc72.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:688702325103:android:8eb05209a6af195d9d689a",
+        "android_client_info": {
+          "package_name": "com.example.everli_client"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "688702325103-h8mjvtl7b5s2gbm7qdstv09615s0ra6o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.everli_client",
+            "certificate_hash": "a22a6b24c5bd4b15e23313e561023d4a858cadf8"
+          }
+        },
+        {
+          "client_id": "688702325103-30q8n97d2gg8bc454j85eb87eqtatft8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMNJ4hAwVpFl6fkGGN79qPBE8gDuCEG4c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "688702325103-30q8n97d2gg8bc454j85eb87eqtatft8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "688702325103-qr99t0sarhnofojt4v137l8qo07otglu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.everliClient"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

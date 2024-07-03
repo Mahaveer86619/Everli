@@ -13,7 +13,7 @@ func main() {
 
 	handleFunctions(mux)
 
-	if err := http.ListenAndServe(":4040", mux); err != nil {
+	if err := http.ListenAndServe(":5050", mux); err != nil {
 		fmt.Println("Error starting server:", err)
 	}
 }
@@ -28,7 +28,7 @@ var welcomeString = `
                                                       
 
 
-Serving at: http://192.168.29.150:4040
+Serving at: http://192.168.29.150:5050
 Running in development mode
 
 `

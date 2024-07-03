@@ -21,12 +21,13 @@ import (
 )
 
 type MyUser struct {
-	User_id    string   `json:"id"`
-	Username   string   `json:"username"`
-	Email      string   `json:"email"`
-	Bio        string   `json:"bio"`
-	Avatar_url string   `json:"avatar_url"`
-	Skills     []string `json:"skills"`
+	User_id      string   `json:"id"`
+	Firebase_uid string   `json:"firebase_uid"`
+	Username     string   `json:"username"`
+	Email        string   `json:"email"`
+	Bio          string   `json:"bio"`
+	Avatar_url   string   `json:"avatar_url"`
+	Skills       []string `json:"skills"`
 }
 
 func init() {

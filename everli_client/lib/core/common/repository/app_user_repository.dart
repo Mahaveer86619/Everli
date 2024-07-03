@@ -9,24 +9,18 @@ import 'package:http/http.dart' as http;
 class AppUserRepository {
   Future<DataState<AppUser>> createUser(AppUser user) async {
     try {
-      debugPrint('user in repo: ${user.toJson()}');
+      debugPrint('user sending: ${const JsonEncoder().convert(user.toJson())}');
       final response = await http.post(
         Uri.parse(
           '${dotenv.get('BASE_URL')}/u/create',
         ),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: {
-          "id": "36743679-7de7-4b2c-ad29-68343ff4ede5",
-          "username": "testUser@",
-          "email": "email",
-          "bio": "bio",
-          "avatar_url": "avatar_url",
-          "skills": ["skill1", "skill2"]
-        },
+        body: const JsonEncoder().convert(user.toJson()),
       );
       if (response.statusCode == 201) {
+        debugPrint('code works till here');
+        debugPrint('user in response: ${response.body}');
+        debugPrint(
+            'user in response after json decode: ${jsonDecode(response.body)}');
         return DataSuccess(
           AppUser.fromJson(jsonDecode(response.body)),
         );
@@ -41,6 +35,7 @@ class AppUserRepository {
       debugPrint("(repo)statusCode: ${response.statusCode}");
       return DataFailure(response.body, response.statusCode);
     } catch (e) {
+      debugPrint(e.toString());
       return DataFailure(e.toString(), -1);
     }
   }
@@ -51,9 +46,6 @@ class AppUserRepository {
         Uri.parse(
           '${dotenv.get('BASE_URL')}/u/get?id=$userId',
         ),
-        headers: {
-          'Content-Type': 'application/json',
-        },
       );
       if (response.statusCode != 200) {
         if (response.statusCode == 404) {

@@ -36,6 +36,7 @@ class AppUserCubit extends Cubit<AppUserState> {
   }
 
   Future<bool> createUser(AppUser user) async {
+    debugPrint('(cubit)user: $user');
     final res = await _appUserRepository.createUser(user);
     if (res is DataSuccess) {
       debugPrint('User created');
@@ -43,7 +44,7 @@ class AppUserCubit extends Cubit<AppUserState> {
       emit(AppUserAuthenticated());
       return true;
     } else {
-      debugPrint('Failed to create user');
+      debugPrint('Failed to create user, error: ${res.error}');
       emit(AppUserInitial());
       return false;
     }
@@ -80,6 +81,7 @@ class AppUserCubit extends Cubit<AppUserState> {
       } else {
         return AppUser(
           id: '',
+          firebaseUid: '',
           username: '',
           email: '',
           avatarUrl: '',
@@ -90,6 +92,7 @@ class AppUserCubit extends Cubit<AppUserState> {
     } else {
       return AppUser(
         id: '',
+        firebaseUid: '',
         username: '',
         email: '',
         avatarUrl: '',

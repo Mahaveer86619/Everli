@@ -39,10 +39,13 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
 
   _onSubmit() {
     if (_formkey.currentState!.validate()) {
+      final username = usernameController.text == ''
+          ? widget.username
+          : usernameController.text;
       context.read<AuthBloc>().add(
             OnCompleteProfilePressed(
               id: widget.id,
-              username: usernameController.text,
+              username: username,
               email: widget.email,
               bio: bioController.text,
               skills: skillsController.text,

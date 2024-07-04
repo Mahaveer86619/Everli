@@ -4,8 +4,8 @@ import 'package:everli_client/core/common/models/app_user.dart';
 import 'package:everli_client/core/resources/data_state.dart';
 import 'package:everli_client/features/auth/repository/auth_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
 import 'package:uuid/uuid.dart';
 
 part 'auth_event.dart';
@@ -15,14 +15,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
   final AppUserCubit _appUserCubit;
   final FirebaseAuth _firebaseAuth;
+  final Logger _logger;
 
   AuthBloc({
     required AuthRepository authRepository,
     required AppUserCubit appUserCubit,
     required FirebaseAuth firebaseAuth,
+    required Logger logger,
   })  : _authRepository = authRepository,
         _appUserCubit = appUserCubit,
         _firebaseAuth = firebaseAuth,
+        _logger = logger,
         super(AuthInitial()) {
     on<SignUpEvent>(_onSignUp);
     on<SignInEvent>(_onSignIn);
@@ -50,7 +53,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthError('Sign up failed'));
       }
     } catch (e) {
-      debugPrint(e.toString());
+      _logger.e(e.toString());
       rethrow;
     }
   }
@@ -66,12 +69,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         event.password,
       );
       if (res is DataSuccess) {
-        emit(SignedIn());
+        _appUserCubit.authenticateUser(res.data!).then((value) {
+          emit(SignedIn());
+        });
       } else {
         emit(AuthError('Sign up failed'));
       }
     } catch (e) {
-      debugPrint(e.toString());
+      _logger.e(e.toString());
       rethrow;
     }
   }
@@ -94,7 +99,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         bio: event.bio,
         skills: skills,
       );
-      debugPrint(user.toString());
       final res = await _appUserCubit.createUser(user);
       if (res) {
         emit(CompletedProfile());
@@ -102,7 +106,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthError('Failed to create user'));
       }
     } catch (e) {
-      debugPrint(e.toString());
+      _logger.e(e.toString());
       rethrow;
     }
   }
@@ -121,7 +125,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         },
         verificationFailed: (FirebaseAuthException e) {
           // error e
-          debugPrint(e.toString());
+          _logger.e(e.toString());
         },
         codeSent: (String verificationId, int? resendToken) {
           // code sent to user
@@ -129,11 +133,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         },
         codeAutoRetrievalTimeout: (String verificationId) {
           // error auto retrieval timeout
-          debugPrint("Error auto retrieval timeout");
+          _logger.e("Error auto retrieval timeout");
         },
       );
     } catch (e) {
-      debugPrint(e.toString());
+      _logger.e(e.toString());
       rethrow;
     }
   }
@@ -154,7 +158,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthError('Sending OTP failed'));
       }
     } catch (e) {
-      debugPrint(e.toString());
+      _logger.e(e.toString());
       rethrow;
     }
   }

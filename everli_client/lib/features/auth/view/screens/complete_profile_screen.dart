@@ -1,8 +1,8 @@
+import 'package:everli_client/core/common/auth_gate/auth_gate.dart';
 import 'package:everli_client/core/utils/extensions.dart';
 import 'package:everli_client/features/auth/bloc/auth_bloc.dart';
 import 'package:everli_client/features/auth/view/widgets/submit_btn.dart';
 import 'package:everli_client/features/auth/view/widgets/text_field.dart';
-import 'package:everli_client/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -45,10 +45,10 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       context.read<AuthBloc>().add(
             OnCompleteProfilePressed(
               id: widget.id,
-              username: username,
+              username: username.trim(),
               email: widget.email,
-              bio: bioController.text,
-              skills: skillsController.text,
+              bio: bioController.text.trim(),
+              skills: skillsController.text.trim(),
             ),
           );
     }

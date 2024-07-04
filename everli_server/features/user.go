@@ -90,9 +90,9 @@ func getUser(user_id string) (*MyUser, error) {
 	req.Header.Set("apikey", serviceKey)
 	req.Header.Set("Authorization", "Bearer "+serviceKey)
 
-	// Add query parameters (optional)
+	// Add query parameters
 	q := req.URL.Query()
-	q.Add("id", "eq."+user_id)
+	q.Add("firebase_uid", "eq."+user_id)
 	q.Add("select", "*")
 	req.URL.RawQuery = q.Encode()
 
@@ -192,7 +192,7 @@ func GetUserController(w http.ResponseWriter, r *http.Request) {
 	user_id := r.URL.Query().Get("id")
 	if user_id == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Invalid request body"))
+		w.Write([]byte("Invalid request body: id is required"))
 		return
 	}
 

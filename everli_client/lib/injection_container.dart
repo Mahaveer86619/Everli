@@ -6,6 +6,7 @@ import 'package:get_it/get_it.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final sl = GetIt.instance;
@@ -25,14 +26,20 @@ Future<void> registerDependencies() async {
   const secureStorage = FlutterSecureStorage();
   sl.registerSingleton<FlutterSecureStorage>(secureStorage);
 
+  //* Register Logger
+  sl.registerSingleton<Logger>(Logger());
+
   //* Core
   //* Register AppUserRepository
-  sl.registerLazySingleton<AppUserRepository>(() => AppUserRepository());
+  sl.registerLazySingleton<AppUserRepository>(() => AppUserRepository(
+        logger: sl<Logger>(),
+  ));
   //* Register AppUserCubit
   sl.registerLazySingleton<AppUserCubit>(() => AppUserCubit(
         sharedPreferences: sl<SharedPreferences>(),
         appUserRepository: sl<AppUserRepository>(),
         firebaseAuth: sl<FirebaseAuth>(),
+        logger: sl<Logger>(),
       ));
 
   //* Repository
@@ -46,5 +53,6 @@ Future<void> registerDependencies() async {
         authRepository: sl<AuthRepository>(),
         appUserCubit: sl<AppUserCubit>(),
         firebaseAuth: sl<FirebaseAuth>(),
+        logger: sl<Logger>(),
       ));
 }

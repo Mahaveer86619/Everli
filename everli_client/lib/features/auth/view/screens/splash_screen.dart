@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:everli_client/features/auth/view/screens/onboarding_screen.dart';
+import 'package:everli_client/core/common/auth_gate/auth_gate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -30,7 +30,7 @@ class _SplashScreenState extends State<SplashScreen> {
     _timer = Timer(const Duration(seconds: 3, milliseconds: 725), () {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => const OnBoardingScreen(),
+          builder: (context) => const AuthGate(),
         ),
       );
     });

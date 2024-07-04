@@ -1,10 +1,8 @@
-import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:everli_client/core/common/cubit/app_user_cubit.dart';
 import 'package:everli_client/core/common/notifications/notifications.dart';
 import 'package:everli_client/core/themes/theme.dart';
 import 'package:everli_client/features/auth/bloc/auth_bloc.dart';
 import 'package:everli_client/features/auth/view/screens/splash_screen.dart';
-import 'package:everli_client/features/home/view/screens/home_screen.dart';
 import 'package:everli_client/firebase_options.dart';
 import 'package:everli_client/injection_container.dart' as di;
 import 'package:firebase_core/firebase_core.dart';
@@ -36,7 +34,7 @@ Future<void> setup() async {
   //* Test connection
   final response = await http.get(
     Uri.parse(
-      dotenv.get('BASE_URL'),
+      "${dotenv.get('BASE_URL')}/",
     ),
   );
   debugPrint(response.body);
@@ -61,45 +59,10 @@ class MyApp extends StatelessWidget {
         theme: lightMode,
         darkTheme: darkMode,
         debugShowCheckedModeBanner: false,
-        home: const AuthGate(),
+        home: const SplashScreen(),
       ),
     );
   }
 }
 
-class AuthGate extends StatefulWidget {
-  const AuthGate({super.key});
 
-  @override
-  State<AuthGate> createState() => _AuthGateState();
-}
-
-class _AuthGateState extends State<AuthGate> {
-  @override
-  void initState() {
-    super.initState();
-
-    AwesomeNotifications().setListeners(
-      onActionReceivedMethod: NotificationController.onActionReceivedMethod,
-      onDismissActionReceivedMethod:
-          NotificationController.onDismissActionReceivedMethod,
-      onNotificationCreatedMethod:
-          NotificationController.onNotificationCreatedMethod,
-      onNotificationDisplayedMethod:
-          NotificationController.onNotificationDisplayedMethod,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<AppUserCubit, AppUserState>(
-      builder: (context, state) {
-        if (state is AppUserAuthenticated) {
-          return const HomeScreen();
-        } else {
-          return const SplashScreen();
-        }
-      },
-    );
-  }
-}

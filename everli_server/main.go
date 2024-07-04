@@ -14,7 +14,7 @@ func main() {
 	handleFunctions(mux)
 
 	if err := http.ListenAndServe(":5050", mux); err != nil {
-		fmt.Println("Error starting server:", err)
+		fmt.Println("Error running server:", err)
 	}
 }
 
@@ -27,11 +27,9 @@ var welcomeString = `
 /_____/     |___/  /_____/  /_/ |_|  /_____/  /___/   
                                                       
 
-
-Serving at: http://192.168.29.150:5050
-Running in development mode
-
 `
+
+
 
 func handleFunctions(mux *http.ServeMux) {
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {

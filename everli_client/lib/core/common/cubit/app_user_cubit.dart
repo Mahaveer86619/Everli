@@ -31,7 +31,6 @@ class AppUserCubit extends Cubit<AppUserState> {
   Future<void> authenticateUser(String firebaseUid) async {
     final resp = await _appUserRepository.getUser(firebaseUid);
     if (resp is DataSuccess) {
-      _logger.d('(cubit)user: ${resp.data}');
       saveUserDetails(resp.data!);
       emit(AppUserAuthenticated());
     } else {
@@ -69,15 +68,32 @@ class AppUserCubit extends Cubit<AppUserState> {
 
   Future<void> saveUserDetails(AppUser user) async {
     try {
-      _logger.d('(cubit)user to save in shared preferences: ${user.toJson()}');
       await _sharedPreferences.setString(
         prefUserKey,
         jsonEncode(user.toJson()).toString(),
       );
-      _logger.d('(cubit)code reaches here');
+      _logger.d('(cubit)code reaches here'); // code does not reach here
     } catch (e) {
       _logger.e('(cubit)error while saving user details: $e');
       rethrow;
+    }
+  }
+
+  Future<AppUser> getUser() async {
+    final userJson = _sharedPreferences.getString(prefUserKey);
+    if (userJson != null) {
+      final user = AppUser.fromJson(jsonDecode(userJson));
+      return user;
+    } else { // will never reach here
+      return AppUser(
+        id: '',
+        firebaseUid: '',
+        username: '',
+        email: '',
+        avatarUrl: '',
+        bio: '',
+        skills: [],
+      );
     }
   }
 

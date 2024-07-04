@@ -39,21 +39,17 @@ class AppUserRepository {
 
   Future<DataState<AppUser>> getUser(String firebaseUid) async {
     try {
-      _logger.d('firebaseUid: $firebaseUid');
       final response = await http.get(
         Uri.parse(
           '${dotenv.get('BASE_URL')}/u/get?id=$firebaseUid',
         ),
       );
-      _logger.d('(App repository)response: ${response.body}');
       if (response.statusCode != 200) {
-        _logger.d('(App repository)response: ${response.body}');
         if (response.statusCode == 404) {
           return DataFailure('User not found', response.statusCode);
         }
         return DataFailure(response.body, response.statusCode);
       }
-      _logger.d('(App repository)response: ${response.body}');
       return DataSuccess(
         AppUser.fromJson(jsonDecode(response.body)),
       );

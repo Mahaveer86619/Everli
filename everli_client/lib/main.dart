@@ -1,6 +1,10 @@
 import 'package:everli_client/core/common/cubit/app_user_cubit.dart';
 import 'package:everli_client/core/common/notifications/notifications.dart';
 import 'package:everli_client/core/themes/theme.dart';
+import 'package:everli_client/features/app/presentation/chat/bloc/chat_bloc.dart';
+import 'package:everli_client/features/app/presentation/home/bloc/home_bloc.dart';
+import 'package:everli_client/features/app/presentation/profile/bloc/profile_bloc.dart';
+import 'package:everli_client/features/app/presentation/todo/bloc/assignment_bloc.dart';
 import 'package:everli_client/features/auth/bloc/auth_bloc.dart';
 import 'package:everli_client/features/auth/view/screens/splash_screen.dart';
 import 'package:everli_client/firebase_options.dart';
@@ -9,7 +13,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
+// import 'package:http/http.dart' as http;
 
 void main() async {
   await setup();
@@ -31,13 +35,13 @@ Future<void> setup() async {
   final appUserCubit = di.sl<AppUserCubit>();
   await appUserCubit.loadUser();
 
-  //* Test connection
-  final response = await http.get(
-    Uri.parse(
-      "${dotenv.get('BASE_URL')}/",
-    ),
-  );
-  debugPrint(response.body);
+  // //* Test connection
+  // final response = await http.get(
+  //   Uri.parse(
+  //     "${dotenv.get('BASE_URL')}/",
+  //   ),
+  // );
+  // debugPrint(response.body);
 }
 
 class MyApp extends StatelessWidget {
@@ -52,6 +56,18 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<AuthBloc>(
           create: (context) => di.sl<AuthBloc>(),
+        ),
+        BlocProvider<HomeBloc>(
+          create: (context) => di.sl<HomeBloc>(),
+        ),
+        BlocProvider<AssignmentBloc>(
+          create: (context) => di.sl<AssignmentBloc>(),
+        ),
+        BlocProvider<ChatBloc>(
+          create: (context) => di.sl<ChatBloc>(),
+        ),
+        BlocProvider<ProfileBloc>(
+          create: (context) => di.sl<ProfileBloc>(),
         ),
       ],
       child: MaterialApp(

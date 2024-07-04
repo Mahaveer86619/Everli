@@ -1,5 +1,13 @@
 import 'package:everli_client/core/common/cubit/app_user_cubit.dart';
 import 'package:everli_client/core/common/repository/app_user_repository.dart';
+import 'package:everli_client/features/app/presentation/chat/bloc/chat_bloc.dart';
+import 'package:everli_client/features/app/presentation/chat/repository/chat_repository.dart';
+import 'package:everli_client/features/app/presentation/home/bloc/home_bloc.dart';
+import 'package:everli_client/features/app/presentation/home/repository/home_repository.dart';
+import 'package:everli_client/features/app/presentation/profile/bloc/profile_bloc.dart';
+import 'package:everli_client/features/app/presentation/profile/repository/profile_repository.dart';
+import 'package:everli_client/features/app/presentation/todo/bloc/assignment_bloc.dart';
+import 'package:everli_client/features/app/presentation/todo/repository/assignment_repository.dart';
 import 'package:everli_client/features/auth/bloc/auth_bloc.dart';
 import 'package:everli_client/features/auth/repository/auth_repository.dart';
 import 'package:get_it/get_it.dart';
@@ -33,7 +41,7 @@ Future<void> registerDependencies() async {
   //* Register AppUserRepository
   sl.registerLazySingleton<AppUserRepository>(() => AppUserRepository(
         logger: sl<Logger>(),
-  ));
+      ));
   //* Register AppUserCubit
   sl.registerLazySingleton<AppUserCubit>(() => AppUserCubit(
         sharedPreferences: sl<SharedPreferences>(),
@@ -46,6 +54,18 @@ Future<void> registerDependencies() async {
   sl.registerLazySingleton<AuthRepository>(() => AuthRepository(
         firebaseAuth: sl<FirebaseAuth>(),
       ));
+  sl.registerLazySingleton<HomeRepository>(() => HomeRepository(
+        logger: sl<Logger>(),
+      ));
+  sl.registerLazySingleton<AssignmentRepository>(() => AssignmentRepository(
+        logger: sl<Logger>(),
+      ));
+  sl.registerLazySingleton<ChatRepository>(() => ChatRepository(
+        logger: sl<Logger>(),
+      ));
+  sl.registerLazySingleton<ProfileRepository>(() => ProfileRepository(
+        logger: sl<Logger>(),
+      ));
 
   //* ViewModels
   //* Register AuthBloc
@@ -55,4 +75,11 @@ Future<void> registerDependencies() async {
         firebaseAuth: sl<FirebaseAuth>(),
         logger: sl<Logger>(),
       ));
+  sl.registerFactory<HomeBloc>(() => HomeBloc(
+        appUserCubit: sl<AppUserCubit>(),
+        homeRepository: sl<HomeRepository>(),
+      ));
+  sl.registerFactory<AssignmentBloc>(() => AssignmentBloc());
+  sl.registerFactory<ChatBloc>(() => ChatBloc());
+  sl.registerFactory<ProfileBloc>(() => ProfileBloc());
 }

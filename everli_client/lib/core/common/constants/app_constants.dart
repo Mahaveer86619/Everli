@@ -6,4 +6,7 @@ String notificationChannelDescription = 'Notifications for Everli';
 
 String prefUserKey = 'user';
 String defaultAvatarUrl =
-    'https://img.freepik.com/free-vector/illustration-businessman_53876-5856.jpg?t=st=1720100597~exp=1720104197~hmac=c4444a6c2b4f0d9da421f24fb64960ae289a8f1de605bc6ca2a0c931778cad3e&w=740';
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSj0LFhRvv9VG_gWlAS2HYkGe4Enn2V-BvHBg&s';
+String defaultEventImageUrl =
+    "https://www.9series.com/img/services/design/leading%20Mobile%20app%20design%20company%20in%20India.jpeg";
+

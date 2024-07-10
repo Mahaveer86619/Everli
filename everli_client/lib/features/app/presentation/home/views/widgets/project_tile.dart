@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:everli_client/core/common/constants/app_constants.dart';
 import 'package:everli_client/features/app/model/event.dart';
 import 'package:everli_client/features/app/presentation/home/views/widgets/chips.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +21,6 @@ class EventTile extends StatelessWidget {
         ),
       ),
       width: MediaQuery.of(context).size.width * 0.7,
-      height: 350,
       margin: const EdgeInsets.symmetric(horizontal: 8),
       padding: const EdgeInsets.all(8),
       child: Column(
@@ -31,7 +31,7 @@ class EventTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             child: CachedNetworkImage(
               width: MediaQuery.of(context).size.width * 0.8,
-              imageUrl: event.imageUrl,
+              imageUrl: event.imageUrl ?? defaultEventImageUrl,
               errorWidget: (context, url, error) => const Icon(Icons.error),
             ),
           ),
@@ -61,18 +61,57 @@ class EventTile extends StatelessWidget {
                       Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                 ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           LinearProgressIndicator(
             value: 0.8,
             borderRadius: BorderRadius.circular(8),
             color: Theme.of(context).colorScheme.primary,
             backgroundColor: Theme.of(context).colorScheme.surface,
           ),
-          //! members Circular Avatar and Goto Button
+          // Row(
+          //   children: [
+          //     buildMemberAvatars(
+          //       context,
+          //       [defaultAvatarUrl, defaultAvatarUrl, defaultAvatarUrl],
+          //     ),
+          //   ],
+          // )
         ],
       ),
     );
   }
+
+  // buildMemberAvatars(BuildContext context, List<String> memberUrls) {
+  //   const int maxMembersToShow = 5;
+  //   final int memberCount = memberUrls.length;
+
+  //   return Stack(
+  //     children: [
+  //       for (int i = 0; i < memberCount && i < maxMembersToShow; i++)
+  //         Positioned(
+  //           left: (i * 40.0) - (i * 10.0),
+  //           top: 0.0,
+  //           child: CircleAvatar(
+  //             backgroundImage: NetworkImage(memberUrls[i]),
+  //             radius: 20.0, // Adjust avatar size
+  //           ),
+  //         ),
+  //       if (memberCount > maxMembersToShow)
+  //         Positioned(
+  //           right: 0.0,
+  //           child: CircleAvatar(
+  //             backgroundColor: Colors.grey[200],
+  //             radius: 15.0, // Adjust size of "more members" avatar
+  //             child: Text(
+  //               "+${memberCount - maxMembersToShow}",
+  //               style: TextStyle(
+  //                   color: Theme.of(context).colorScheme.onBackground),
+  //             ),
+  //           ),
+  //         ),
+  //     ],
+  //   );
+  // }
 
   String formatDate(String iso8601String) {
     final DateTime dateTime = DateTime.parse(iso8601String);

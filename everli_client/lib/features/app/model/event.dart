@@ -1,9 +1,11 @@
+import 'package:everli_client/core/common/constants/app_constants.dart';
+
 class MyEvent {
   final String id;
   final String creatorId;
   final String title;
   final String description;
-  final String imageUrl;
+  final String? imageUrl;
   final List<String> tags;
   final String creationDate;
 
@@ -12,7 +14,7 @@ class MyEvent {
     required this.creatorId,
     required this.title,
     required this.description,
-    required this.imageUrl,
+    this.imageUrl,
     required this.tags,
     required this.creationDate,
   });
@@ -35,7 +37,7 @@ class MyEvent {
       'creator_id': creatorId,
       'title': title,
       'description': description,
-      'image_url': imageUrl,
+      'image_url': imageUrl ?? defaultEventImageUrl,
       'tags': tags.map((tag) => tag).toList(),
       'creation_date': creationDate,
     };

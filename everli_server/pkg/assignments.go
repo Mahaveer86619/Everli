@@ -1,45 +1,31 @@
-package features
-
-/*
-
-User Status Codes
-status code 201 if user created successfully
-status code 409 if user name already exists
-status code 200 if user successfully fetched
-status code 204 if user updated successfully
-
-*/
+package pkg
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
-
-	"github.com/joho/godotenv"
 )
 
-type MyUser struct {
-	User_id      string   `json:"id"`
-	Firebase_uid string   `json:"firebase_uid"`
-	Username     string   `json:"username"`
-	Email        string   `json:"email"`
-	Bio          string   `json:"bio"`
-	Avatar_url   string   `json:"avatar_url"`
-	Skills       []string `json:"skills"`
+type Assignment struct {
+	Id          string `json:"id"`
+	EventId     string `json:"event_id"`
+	MemberId    string `json:"member_id"`
+	Goal        string `json:"goal"`
+	Description string `json:"description"`
+	DueDate     string `json:"due_date"`
+	Status      string `json:"status"`
+	CreatedAt   string `json:"created_at"`
 }
 
-func init() {
-	godotenv.Load(".env")
-}
-
-func createuser(user *MyUser) (int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/profiles"
+func CreateAssignment(assignment *Assignment) (int, error) {
+	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/assignments"
 	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
 
 	// Marshal user data to JSON
-	jsonData, err := json.Marshal(user)
+	jsonData, err := json.Marshal(assignment)
 	if err != nil {
 		fmt.Println(err)
 		return -1, err
@@ -68,15 +54,23 @@ func createuser(user *MyUser) (int, error) {
 
 	// Check response status code
 	if resp.StatusCode != http.StatusCreated {
+		// Read the response body
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error reading response body:", err)
+			return -1, err
+		}
+
+		// Print the response body
+		fmt.Println("Response body:", string(body))
 		return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
 	return -1, nil
-
 }
 
-func getUser(user_id string) (*MyUser, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/profiles"
+func GetAssignment(assignment_id string) (*Assignment, error) {
+	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/assignments"
 	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
 
 	// Create HTTP request
@@ -92,7 +86,7 @@ func getUser(user_id string) (*MyUser, error) {
 
 	// Add query parameters
 	q := req.URL.Query()
-	q.Add("firebase_uid", "eq."+user_id)
+	q.Add("id", "eq."+assignment_id)
 	q.Add("select", "*")
 	req.URL.RawQuery = q.Encode()
 
@@ -110,23 +104,22 @@ func getUser(user_id string) (*MyUser, error) {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
-	var user []MyUser
-	err = json.NewDecoder(resp.Body).Decode(&user)
+	var assignments []Assignment
+	err = json.NewDecoder(resp.Body).Decode(&assignments)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
 
-	return &user[0], nil
-
+	return &assignments[0], nil
 }
 
-func updateUser(user *MyUser) (int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/profiles"
+func UpdateAssignment(assignment *Assignment) (int, error) {
+	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/assignments"
 	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
 
 	// Marshal user data to JSON
-	jsonData, err := json.Marshal(user)
+	jsonData, err := json.Marshal(assignment)
 	if err != nil {
 		fmt.Println(err)
 		return -1, err
@@ -147,7 +140,7 @@ func updateUser(user *MyUser) (int, error) {
 
 	// Add query parameters (optional)
 	q := req.URL.Query()
-	q.Add("id", "eq."+user.User_id)
+	q.Add("id", "eq."+assignment.Id)
 	req.URL.RawQuery = q.Encode()
 
 	// Send request and handle response
@@ -165,64 +158,48 @@ func updateUser(user *MyUser) (int, error) {
 	}
 
 	return -1, nil
-
 }
 
-func CreateUserController(w http.ResponseWriter, r *http.Request) {
-	var user MyUser
-	err := json.NewDecoder(r.Body).Decode(&user)
+func DeleteAssignment(assignment_id string) (int, error) {
+	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/assignments"
+	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+
+	// Create HTTP request
+	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Invalid request body"))
-		return
+		fmt.Println(err)
+		return -1, err
 	}
 
-	statusCode, err := createuser(&user)
+	// Set headers
+	req.Header.Set("apikey", serviceKey)
+	req.Header.Set("Authorization", "Bearer "+serviceKey)
+
+	// Add query parameters
+	q := req.URL.Query()
+	q.Add("id", "eq."+assignment_id)
+	req.URL.RawQuery = q.Encode()
+
+	// Send request and handle response
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
-		w.WriteHeader(statusCode)
-		w.Write([]byte(err.Error()))
-		return
+		fmt.Println(err)
+		return -1, err
+	}
+	defer resp.Body.Close()
+
+	// Check response status code
+	if resp.StatusCode != http.StatusOK {
+		return -1, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
-}
-
-func GetUserController(w http.ResponseWriter, r *http.Request) {
-	user_id := r.URL.Query().Get("id")
-	if user_id == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Invalid request body: id is required"))
-		return
-	}
-
-	user, err := getUser(user_id)
+	var assignments []Assignment
+	err = json.NewDecoder(resp.Body).Decode(&assignments)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
+		fmt.Println(err)
+		return -1, err
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(user)
-}
-
-func UpdateUserController(w http.ResponseWriter, r *http.Request) {
-	var user MyUser
-	err := json.NewDecoder(r.Body).Decode(&user)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Invalid request body"))
-		return
-	}
-
-	statusCode, err := updateUser(&user)
-	if err != nil {
-		w.WriteHeader(statusCode)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(user)
+	return -1, nil
 }

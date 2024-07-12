@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
+
+	response "github.com/Mahaveer86619/Everli/pkg/Response"
 )
 
 type Event struct {
@@ -53,22 +54,17 @@ func CreateEvent(event *Event) (int, error) {
 
 	// Check response status code
 	if resp.StatusCode != http.StatusCreated {
-		// Read the response body
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("Error reading response body:", err)
-			return -1, err
+		var supabaseErr response.SupabaseError
+		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
+			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 		}
-
-		// Print the response body
-		fmt.Println("Response body:", string(body))
-		return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
 	}
 
 	return -1, nil
 }
 
-func GetEvent(event_id string) (*Event, error) {
+func GetEvent(event_id string) (*Event, int, error) {
 	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/events"
 	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
 
@@ -76,7 +72,7 @@ func GetEvent(event_id string) (*Event, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		fmt.Println(err)
-		return nil, err
+		return nil, -1, err
 	}
 
 	// Set headers
@@ -94,32 +90,27 @@ func GetEvent(event_id string) (*Event, error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
-		return nil, err
+		return nil, -1, err
 	}
 	defer resp.Body.Close()
 
 	// Check response status code
 	if resp.StatusCode != http.StatusOK {
-		// Read the response body
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("Error reading response body:", err)
-			return nil, err
+		var supabaseErr response.SupabaseError
+		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
+			return nil, resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 		}
-
-		// Print the response body
-		fmt.Println("Response body:", string(body))
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return nil, resp.StatusCode, fmt.Errorf(supabaseErr.Message)
 	}
 
 	var event []Event
 	err = json.NewDecoder(resp.Body).Decode(&event)
 	if err != nil {
 		fmt.Println(err)
-		return nil, err
+		return nil, -1, err
 	}
 
-	return &event[0], nil
+	return &event[0], -1, nil
 }
 
 func UpdateEvent(event *Event) (int, error) {
@@ -161,17 +152,12 @@ func UpdateEvent(event *Event) (int, error) {
 	defer resp.Body.Close()
 
 	// Check response status code
-	if resp.StatusCode != http.StatusOK {
-		// Read the response body
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("Error reading response body:", err)
-			return -1, err
+	if resp.StatusCode != 204 {
+		var supabaseErr response.SupabaseError
+		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
+			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 		}
-
-		// Print the response body
-		fmt.Println("Response body:", string(body))
-		return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
 	}
 
 	return -1, nil
@@ -184,7 +170,7 @@ func DeleteEvent(event_id string) (int, error) {
 	// Create HTTP request
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
-		fmt.Println("1", err)
+		fmt.Println(err)
 		return -1, err
 	}
 
@@ -201,23 +187,18 @@ func DeleteEvent(event_id string) (int, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("2", err)
+		fmt.Println(err)
 		return -1, err
 	}
 	defer resp.Body.Close()
 
 	// Check response status code
 	if resp.StatusCode != http.StatusNoContent {
-		// Read the response body
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("Error reading response body:", err)
-			return -1, err
+		var supabaseErr response.SupabaseError
+		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
+			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 		}
-
-		// Print the response body
-		fmt.Println("Response body:", string(body))
-		return -1, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
 	}
 
 	return -1, nil

@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
+
+	response "github.com/Mahaveer86619/Everli/pkg/Response"
 )
 
 type Assignment struct {
@@ -54,22 +55,17 @@ func CreateAssignment(assignment *Assignment) (int, error) {
 
 	// Check response status code
 	if resp.StatusCode != http.StatusCreated {
-		// Read the response body
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("Error reading response body:", err)
-			return -1, err
+		var supabaseErr response.SupabaseError
+		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
+			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 		}
-
-		// Print the response body
-		fmt.Println("Response body:", string(body))
-		return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
 	}
 
 	return -1, nil
 }
 
-func GetAssignment(assignment_id string) (*Assignment, error) {
+func GetAssignment(assignment_id string) (*Assignment, int, error) {
 	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/assignments"
 	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
 
@@ -77,7 +73,7 @@ func GetAssignment(assignment_id string) (*Assignment, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		fmt.Println(err)
-		return nil, err
+		return nil, -1, err
 	}
 
 	// Set headers
@@ -95,23 +91,27 @@ func GetAssignment(assignment_id string) (*Assignment, error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
-		return nil, err
+		return nil, -1, err
 	}
 	defer resp.Body.Close()
 
 	// Check response status code
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		var supabaseErr response.SupabaseError
+		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
+			return nil, resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		}
+		return nil, resp.StatusCode, fmt.Errorf(supabaseErr.Message)
 	}
 
 	var assignments []Assignment
 	err = json.NewDecoder(resp.Body).Decode(&assignments)
 	if err != nil {
 		fmt.Println(err)
-		return nil, err
+		return nil, -1, err
 	}
 
-	return &assignments[0], nil
+	return &assignments[0], -1, nil
 }
 
 func UpdateAssignment(assignment *Assignment) (int, error) {
@@ -153,8 +153,12 @@ func UpdateAssignment(assignment *Assignment) (int, error) {
 	defer resp.Body.Close()
 
 	// Check response status code
-	if resp.StatusCode != http.StatusOK {
-		return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusNoContent {
+		var supabaseErr response.SupabaseError
+		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
+			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		}
+		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
 	}
 
 	return -1, nil
@@ -190,15 +194,12 @@ func DeleteAssignment(assignment_id string) (int, error) {
 	defer resp.Body.Close()
 
 	// Check response status code
-	if resp.StatusCode != http.StatusOK {
-		return -1, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
-
-	var assignments []Assignment
-	err = json.NewDecoder(resp.Body).Decode(&assignments)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
+	if resp.StatusCode != http.StatusNoContent {
+		var supabaseErr response.SupabaseError
+		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
+			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		}
+		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
 	}
 
 	return -1, nil

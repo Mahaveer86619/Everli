@@ -1,21 +1,13 @@
 package pkg
 
-/*
-
-User Status Codes
-status code 201 if user created successfully
-status code 409 if user name already exists
-status code 200 if user successfully fetched
-status code 204 if user updated successfully
-
-*/
-
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
+
+	response "github.com/Mahaveer86619/Everli/pkg/Response"
 )
 
 type MyUser struct {
@@ -62,14 +54,18 @@ func Createuser(user *MyUser) (int, error) {
 
 	// Check response status code
 	if resp.StatusCode != http.StatusCreated {
-		return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		var supabaseErr response.SupabaseError
+		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
+			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		}
+		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
 	}
 
 	return -1, nil
 
 }
 
-func GetUser(user_id string) (*MyUser, error) {
+func GetUser(user_id string) (*MyUser, int, error) {
 	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/profiles"
 	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
 
@@ -77,7 +73,7 @@ func GetUser(user_id string) (*MyUser, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		fmt.Println(err)
-		return nil, err
+		return nil, -1, err
 	}
 
 	// Set headers
@@ -95,23 +91,27 @@ func GetUser(user_id string) (*MyUser, error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
-		return nil, err
+		return nil, -1, err
 	}
 	defer resp.Body.Close()
 
 	// Check response status code
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		var supabaseErr response.SupabaseError
+		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
+			return nil, resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		}
+		return nil, resp.StatusCode, fmt.Errorf(supabaseErr.Message)
 	}
 
 	var user []MyUser
 	err = json.NewDecoder(resp.Body).Decode(&user)
 	if err != nil {
 		fmt.Println(err)
-		return nil, err
+		return nil,-1, err
 	}
 
-	return &user[0], nil
+	return &user[0], -1, nil
 
 }
 
@@ -154,10 +154,13 @@ func UpdateUser(user *MyUser) (int, error) {
 	defer resp.Body.Close()
 
 	// Check response status code
-	if resp.StatusCode != http.StatusOK {
-		return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusNoContent {
+		var supabaseErr response.SupabaseError
+		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
+			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		}
+		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
 	}
 
 	return -1, nil
-
 }

@@ -8,6 +8,7 @@ import (
 	"os"
 
 	response "github.com/Mahaveer86619/Everli/pkg/Response"
+	"github.com/google/uuid"
 )
 
 type Assignment struct {
@@ -24,6 +25,10 @@ type Assignment struct {
 func CreateAssignment(assignment *Assignment) (int, error) {
 	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/assignments"
 	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+
+	// Generate a unique ID for the assignment
+	id := uuid.New().String()
+	assignment.Id = id
 
 	// Marshal user data to JSON
 	jsonData, err := json.Marshal(assignment)

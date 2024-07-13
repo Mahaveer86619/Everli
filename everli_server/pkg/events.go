@@ -8,6 +8,7 @@ import (
 	"os"
 
 	response "github.com/Mahaveer86619/Everli/pkg/Response"
+	"github.com/google/uuid"
 )
 
 type Event struct {
@@ -23,6 +24,10 @@ type Event struct {
 func CreateEvent(event *Event) (int, error) {
 	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/events"
 	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+
+	// Generate a unique ID for the event
+	id := uuid.New().String()
+	event.Id = id
 
 	// Marshal user data to JSON
 	jsonData, err := json.Marshal(event)

@@ -8,10 +8,11 @@ import (
 	"os"
 
 	response "github.com/Mahaveer86619/Everli/pkg/Response"
+	"github.com/google/uuid"
 )
 
 type MyUser struct {
-	User_id      string   `json:"id"`
+	Id           string   `json:"id"`
 	Firebase_uid string   `json:"firebase_uid"`
 	Username     string   `json:"username"`
 	Email        string   `json:"email"`
@@ -23,6 +24,10 @@ type MyUser struct {
 func Createuser(user *MyUser) (int, error) {
 	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/profiles"
 	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+
+	// Generate a unique ID for the user
+	id := uuid.New().String()
+	user.Id = id
 
 	// Marshal user data to JSON
 	jsonData, err := json.Marshal(user)
@@ -108,7 +113,7 @@ func GetUser(user_id string) (*MyUser, int, error) {
 	err = json.NewDecoder(resp.Body).Decode(&user)
 	if err != nil {
 		fmt.Println(err)
-		return nil,-1, err
+		return nil, -1, err
 	}
 
 	return &user[0], -1, nil
@@ -141,7 +146,7 @@ func UpdateUser(user *MyUser) (int, error) {
 
 	// Add query parameters (optional)
 	q := req.URL.Query()
-	q.Add("id", "eq."+user.User_id)
+	q.Add("id", "eq."+user.Id)
 	req.URL.RawQuery = q.Encode()
 
 	// Send request and handle response

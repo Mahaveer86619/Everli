@@ -1,0 +1,18 @@
+services:
+  server:
+    build: .
+    container_name: everli_server
+    ports:
+      - 5050:5050
+    depends_on:
+      - db
+    command: go run main.go
+  db:
+    image: postgres:16.3
+    container_name: everli_db
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - ./db_data:/var/lib/postgresql/data

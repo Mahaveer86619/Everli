@@ -1,23 +1,43 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
+	postgres "github.com/Mahaveer86619/Everli/pkg/DB"
 	handlers "github.com/Mahaveer86619/Everli/pkg/Handlers"
+
 	"github.com/joho/godotenv"
 )
 
 func main() {
 	mux := http.NewServeMux()
-	fmt.Println(welcomeString)
 
-	err := godotenv.Load(".env")
+	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file:", err)
 	}
+	time.Sleep(2 * time.Second)
 
+	db, err := postgres.ConnectDB()
+	if err != nil {
+		log.Fatal("Error connecting to database:", err)
+	}
+	defer db.Close(context.Background())
+
+	err = postgres.CreateTables(db)
+	if err != nil {
+		log.Fatal("Error creating tables:", err)
+	}
+
+	// Pass the connection to your handlers
+	postgres.SetDBConnection(db)
+
+	fmt.Println(welcomeString)
+	fmt.Println("Successfully connected to the database!")
 	handleFunctions(mux)
 
 	if err := http.ListenAndServe(":5050", mux); err != nil {

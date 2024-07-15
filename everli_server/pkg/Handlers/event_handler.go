@@ -28,16 +28,6 @@ func CreateEventController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// var my_role pkg.Role = pkg.Role{Id: my_event.RoleId, EventId: my_event.Id, MemberId: my_event.CreatorId, Role: "Admin", CreatedAt: my_event.CreatedAt}
-	// statusCode, err = pkg.CreateRole(&my_role)
-	// if err != nil {
-	// 	failureResponse := resp.Failure{}
-	// 	failureResponse.SetStatusCode(statusCode)
-	// 	failureResponse.SetMessage(err.Error())
-	// 	failureResponse.JSON(w)
-	// 	return
-	// }
-
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(http.StatusCreated)
 	successResponse.SetData(my_event)

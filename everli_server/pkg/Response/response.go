@@ -43,6 +43,7 @@ func (s *Success) SetData(data interface{}) {
 }
 
 func (s *Success) JSON(w http.ResponseWriter) {
+	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(s.StatusCode)
 	json.NewEncoder(w).Encode(s)
 }
@@ -60,6 +61,7 @@ func (f *Failure) SetData(data interface{}) {
 }
 
 func (f *Failure) JSON(w http.ResponseWriter) {
+	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(f.StatusCode)
 	json.NewEncoder(w).Encode(f)
 }

@@ -67,7 +67,7 @@ func CreateInvitation(invitation *Invitation) (int, error) {
 	return -1, nil
 }
 
-func GetInvitation(invitation_id string) (*Invitation, int, error) {
+func GetInvitation(code string) (*Invitation, int, error) {
 	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/invitations"
 	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
 
@@ -84,7 +84,7 @@ func GetInvitation(invitation_id string) (*Invitation, int, error) {
 
 	// Add query parameters
 	q := req.URL.Query()
-	q.Add("id", "eq."+invitation_id)
+	q.Add("code", "eq."+code)
 	q.Add("select", "*")
 	req.URL.RawQuery = q.Encode()
 

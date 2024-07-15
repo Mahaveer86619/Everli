@@ -1,3 +1,5 @@
 # this will affect all the files of project
 **.env
-everli_firebase.json
+**.env.ererli
+**todo.txt
+/everli_server/db_data

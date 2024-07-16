@@ -1,16 +1,14 @@
 package pkg
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
+	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
-	"os"
 	"strings"
 
 	db "github.com/Mahaveer86619/Everli/pkg/DB"
-	response "github.com/Mahaveer86619/Everli/pkg/Response"
 	"github.com/google/uuid"
 )
 
@@ -26,125 +24,241 @@ type MyUser struct {
 	Updated_at   string   `json:"updated_at"`
 }
 
-func Createuser(user *MyUser) (int, error) {
+type pg_return struct {
+	Id           string `json:"id"`
+	Firebase_uid string `json:"firebase_uid"`
+	Username     string `json:"username"`
+	Email        string `json:"email"`
+	Bio          string `json:"bio"`
+	Avatar_url   string `json:"avatar_url"`
+	Skills       string `json:"skills"`
+	Created_at   string `json:"created_at"`
+	Updated_at   string `json:"updated_at"`
+}
+
+func Createuser(user *MyUser) (*MyUser, int, error) {
 	conn := db.GetDBConnection()
 	ctx := context.Background()
 
 	query := `
 		INSERT INTO profiles (id, firebase_uid, username, email, avatar_url, bio, skills, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *
 	`
 
 	// Generate a unique ID and skillsJSON for the user
 	user.Id = uuid.New().String()
 	skillsStr := strings.Join(user.Skills, "|")
 
-	fmt.Printf("Inserting user: %s, %s, %s, %s, %s, %s, %s, %s, %s\n", user.Id, user.Firebase_uid, user.Username, user.Email, user.Avatar_url, user.Bio, skillsStr, user.Created_at, user.Updated_at)
-
-	_, err := conn.Exec(ctx, query, user.Id, user.Firebase_uid, user.Username, user.Email, user.Avatar_url, user.Bio, skillsStr, user.Created_at, user.Updated_at)
+	var pg_user pg_return
+	err := conn.QueryRow(
+		ctx,
+		query,
+		user.Id,
+		user.Firebase_uid,
+		user.Username,
+		user.Email,
+		user.Avatar_url,
+		user.Bio,
+		skillsStr,
+		user.Created_at,
+		user.Updated_at).Scan(
+		&pg_user.Id,
+		&pg_user.Firebase_uid,
+		&pg_user.Username,
+		&pg_user.Email,
+		&pg_user.Avatar_url,
+		&pg_user.Bio,
+		&pg_user.Skills,
+		&pg_user.Created_at,
+		&pg_user.Updated_at)
 	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("error creating user: %w", err)
+		log.Panic(err)
+		return nil, http.StatusInternalServerError, fmt.Errorf("error creating user: %w", err)
 	}
 
-	return http.StatusCreated, nil
+	my_user, err := pgUserToUser(pg_user)
+	if err != nil {
+		log.Panic(err)
+		return nil, http.StatusInternalServerError, fmt.Errorf("error converting user: %w", err)
+	}
+
+	return my_user, http.StatusCreated, nil
 }
 
-func GetUser(user_id string) (*MyUser, int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/profiles"
-	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+func GetAllUsers() ([]MyUser, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
 
-	// Create HTTP request
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	query := `
+	  SELECT *
+	  FROM profiles
+	`
+
+	rows, err := conn.Query(ctx, query)
 	if err != nil {
-		fmt.Println(err)
-		return nil, -1, err
+		fmt.Print("error getting users: %w", err)
 	}
+	defer rows.Close()
 
-	// Set headers
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", "Bearer "+serviceKey)
+	var users []MyUser
 
-	// Add query parameters
-	q := req.URL.Query()
-	q.Add("firebase_uid", "eq."+user_id)
-	q.Add("select", "*")
-	req.URL.RawQuery = q.Encode()
-
-	// Send request and handle response
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return nil, -1, err
-	}
-	defer resp.Body.Close()
-
-	// Check response status code
-	if resp.StatusCode != http.StatusOK {
-		var supabaseErr response.SupabaseError
-		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
-			return nil, resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	for rows.Next() {
+		var user *MyUser
+		var pg_return pg_return
+		err := rows.Scan(
+			&pg_return.Id,
+			&pg_return.Firebase_uid,
+			&pg_return.Username,
+			&pg_return.Email,
+			&pg_return.Avatar_url,
+			&pg_return.Bio,
+			&pg_return.Skills,
+			&pg_return.Created_at,
+			&pg_return.Updated_at)
+		if err != nil {
+			return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
 		}
-		return nil, resp.StatusCode, fmt.Errorf(supabaseErr.Message)
+		user, err = pgUserToUser(pg_return)
+		if err != nil {
+			log.Panic(err)
+			return nil, http.StatusInternalServerError, fmt.Errorf("error converting user: %w", err)
+		}
+
+		users = append(users, *user)
 	}
-
-	var user []MyUser
-	err = json.NewDecoder(resp.Body).Decode(&user)
-	if err != nil {
-		fmt.Println(err)
-		return nil, -1, err
-	}
-
-	return &user[0], -1, nil
-
+	return users, http.StatusOK, nil
 }
 
-func UpdateUser(user *MyUser) (int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/profiles"
-	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+func GetUserByID(userID string) (*MyUser, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
 
-	// Marshal user data to JSON
-	jsonData, err := json.Marshal(user)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-
-	// Create HTTP request
-	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewReader(jsonData))
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-
-	// Set headers
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", "Bearer "+serviceKey)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Prefer", "resolution=merge-duplicates")
-
-	// Add query parameters (optional)
-	q := req.URL.Query()
-	q.Add("id", "eq."+user.Id)
-	req.URL.RawQuery = q.Encode()
-
-	// Send request and handle response
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-	defer resp.Body.Close()
-
-	// Check response status code
-	if resp.StatusCode != http.StatusNoContent {
-		var supabaseErr response.SupabaseError
-		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
-			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	query := `
+	  SELECT *
+	  FROM profiles
+	  WHERE id = $1
+	`
+	var pg_return pg_return
+	if err := conn.QueryRow(
+		ctx,
+		query,
+		userID).Scan(
+		&pg_return.Id,
+		&pg_return.Firebase_uid,
+		&pg_return.Username,
+		&pg_return.Email,
+		&pg_return.Avatar_url,
+		&pg_return.Bio,
+		&pg_return.Skills,
+		&pg_return.Created_at,
+		&pg_return.Updated_at); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusNotFound, fmt.Errorf("user not found with id: %s", userID)
 		}
-		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
+		return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+	}
+	// Parse skills string to slice
+	user, err := pgUserToUser(pg_return)
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("error converting user: %w", err)
 	}
 
-	return -1, nil
+	return user, http.StatusOK, nil
+}
+
+func UpdateUser(user *MyUser) (*MyUser, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
+
+	query := `UPDATE profiles 
+	SET firebase_uid = $1, username = $2, email = $3, bio = $4, avatar_url = $5, skills = $6, created_at = $7, updated_at = $8
+	WHERE id = $9 RETURNING *
+	`
+
+	skillsStr := strings.Join(user.Skills, "|")
+	var pg_return pg_return
+
+	if err := conn.QueryRow(
+		ctx,
+		query,
+		user.Firebase_uid,
+		user.Username,
+		user.Email,
+		user.Bio,
+		user.Avatar_url,
+		skillsStr,
+		user.Created_at,
+		user.Updated_at,
+		user.Id).Scan(
+		&pg_return.Id,
+		&pg_return.Firebase_uid,
+		&pg_return.Username,
+		&pg_return.Email,
+		&pg_return.Avatar_url,
+		&pg_return.Bio,
+		&pg_return.Skills,
+		&pg_return.Created_at,
+		&pg_return.Updated_at); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusNotFound, fmt.Errorf("user not found with id: %s", user.Id)
+		}
+		return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+	}
+	// Parse skills string to slice
+	user, err := pgUserToUser(pg_return)
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("error converting user: %w", err)
+	}
+
+	return user, http.StatusOK, nil
+}
+
+func DeleteUser(userId string) (int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
+
+	query := "DELETE FROM profiles WHERE id = $1"
+
+	_, err := conn.Exec(ctx, query, userId)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
+	}
+
+	return http.StatusNoContent, nil
+}
+
+func pgUserToUser(pg_user pg_return) (*MyUser, error) {
+	user := &MyUser{
+		Id:           pg_user.Id,
+		Firebase_uid: pg_user.Firebase_uid,
+		Username:     pg_user.Username,
+		Email:        pg_user.Email,
+		Avatar_url:   pg_user.Avatar_url,
+		Bio:          pg_user.Bio,
+		Created_at:   pg_user.Created_at,
+		Updated_at:   pg_user.Updated_at,
+	}
+
+	skills := strings.Split(pg_user.Skills, "|")
+	user.Skills = skills
+
+	return user, nil
+}
+
+func UserTopgUser(user *MyUser) (*pg_return, error) {
+	pg_user := &pg_return{
+		Id:           user.Id,
+		Firebase_uid: user.Firebase_uid,
+		Username:     user.Username,
+		Email:        user.Email,
+		Avatar_url:   user.Avatar_url,
+		Bio:          user.Bio,
+		Created_at:   user.Created_at,
+		Updated_at:   user.Updated_at,
+	}
+
+	skillsStr := strings.Join(user.Skills, "|")
+	pg_user.Skills = skillsStr
+
+	return pg_user, nil
 }

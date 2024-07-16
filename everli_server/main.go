@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -26,7 +25,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Error connecting to database:", err)
 	}
-	defer db.Close(context.Background())
+	defer postgres.CloseDBConnection(db)
 
 	err = postgres.CreateTables(db)
 	if err != nil {
@@ -64,8 +63,10 @@ func handleFunctions(mux *http.ServeMux) {
 
 	//* Users routes
 	mux.HandleFunc("POST /api/v1/users", handlers.CreateUserController)
+	mux.HandleFunc("GET /api/v1/all_users", handlers.GetAllUsersController)
 	mux.HandleFunc("GET /api/v1/users", handlers.GetUserController)
 	mux.HandleFunc("PATCH /api/v1/users", handlers.UpdateUserController)
+	mux.HandleFunc("DELETE /api/v1/users", handlers.DeleteUserController)
 
 	//* Events routes
 	mux.HandleFunc("POST /api/v1/events", handlers.CreateEventController)

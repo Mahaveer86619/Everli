@@ -42,6 +42,10 @@ func GetDBConnection() *pgx.Conn {
 	return db
 }
 
+func CloseDBConnection(conn *pgx.Conn) {
+	conn.Close(context.Background())
+}
+
 func CreateTables(conn *pgx.Conn) error {
 	ctx := context.Background()
 

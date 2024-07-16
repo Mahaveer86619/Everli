@@ -1,5 +1,3 @@
-# this will affect all the files of project
 **.env
-**.env.ererli
 **todo.txt
 /everli_server/db_data

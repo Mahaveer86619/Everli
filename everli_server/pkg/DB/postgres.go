@@ -66,13 +66,15 @@ func CreateTables(conn *pgx.Conn) error {
 			creator_id UUID REFERENCES profiles(id) NOT NULL,
 			name TEXT NOT NULL,
 			description TEXT,
+			tags TEXT,
+			cover_image_url TEXT,
   			created_at TEXT,
   			updated_at TEXT
 		);`,
 		`CREATE TABLE IF NOT EXISTS assignments (
 			id UUID PRIMARY KEY,
 			event_id UUID REFERENCES events(id) NOT NULL,
-			member_id UUID REFERENCES profiles(id), -- Nullable foreign key
+			member_id UUID REFERENCES profiles(id),
 			goal TEXT NOT NULL,
 			description TEXT,
 			due_date TIMESTAMP,
@@ -85,6 +87,7 @@ func CreateTables(conn *pgx.Conn) error {
 			assignment_id UUID REFERENCES assignments(id) NOT NULL,
 			member_id UUID REFERENCES profiles(id) NOT NULL,
 			goal TEXT NOT NULL,
+			description TEXT,
 			due_date TIMESTAMP,
 			status TEXT,
   			created_at TEXT,
@@ -102,7 +105,7 @@ func CreateTables(conn *pgx.Conn) error {
 			id UUID PRIMARY KEY,
 			code TEXT UNIQUE NOT NULL,
 			event_id UUID REFERENCES events(id) NOT NULL,
-			expiry TIMESTAMP,
+			expiry TEXT,
 			role TEXT,
   			created_at TEXT
 		);`,

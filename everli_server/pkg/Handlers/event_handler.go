@@ -19,7 +19,7 @@ func CreateEventController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statusCode, err := pkg.CreateEvent(&my_event)
+	pg_event, statusCode, err := pkg.CreateEvent(&my_event)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -30,7 +30,7 @@ func CreateEventController(w http.ResponseWriter, r *http.Request) {
 
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(http.StatusCreated)
-	successResponse.SetData(my_event)
+	successResponse.SetData(pg_event)
 	successResponse.SetMessage("Event created successfully")
 	successResponse.JSON(w)
 }
@@ -45,7 +45,7 @@ func GetEventController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	event, statusCode, err := pkg.GetEvent(event_id)
+	pg_event, statusCode, err := pkg.GetEvent(event_id)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -56,7 +56,7 @@ func GetEventController(w http.ResponseWriter, r *http.Request) {
 
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(http.StatusOK)
-	successResponse.SetData(event)
+	successResponse.SetData(pg_event)
 	successResponse.SetMessage("Event fetched successfully")
 	successResponse.JSON(w)
 }
@@ -72,7 +72,7 @@ func UpdateEventController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statusCode, err := pkg.UpdateEvent(&my_event)
+	pg_event, statusCode, err := pkg.UpdateEvent(&my_event)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -83,7 +83,7 @@ func UpdateEventController(w http.ResponseWriter, r *http.Request) {
 
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(http.StatusOK)
-	successResponse.SetData(my_event)
+	successResponse.SetData(pg_event)
 	successResponse.SetMessage("Event updated successfully")
 	successResponse.JSON(w)
 }

@@ -126,6 +126,7 @@ func DeleteUserController(w http.ResponseWriter, r *http.Request) {
 
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(statusCode)
+	successResponse.SetData(nil)
 	successResponse.SetMessage("User deleted successfully")
 	successResponse.JSON(w)
 }

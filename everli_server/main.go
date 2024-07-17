@@ -77,18 +77,24 @@ func handleFunctions(mux *http.ServeMux) {
 	//* Assignments routes
 	mux.HandleFunc("POST /api/v1/assignments", handlers.CreateAssignmentController)
 	mux.HandleFunc("GET /api/v1/assignments", handlers.GetAssignmentController)
+	mux.HandleFunc("GET /api/v1/assignments/event", handlers.GetAssignmentsByEventIdController)
+	mux.HandleFunc("GET /api/v1/assignments/member", handlers.GetAssignmentsByMemberIdController)
 	mux.HandleFunc("PATCH /api/v1/assignments", handlers.UpdateAssignmentController)
 	mux.HandleFunc("DELETE /api/v1/assignments", handlers.DeleteAssignmentController)
 
 	//* Checkpoints routes
 	mux.HandleFunc("POST /api/v1/checkpoints", handlers.CreateCheckpointController)
 	mux.HandleFunc("GET /api/v1/checkpoints", handlers.GetCheckpointController)
+	mux.HandleFunc("GET /api/v1/checkpoints/assignment", handlers.GetCheckpointsByAssignmentIdController)
+	mux.HandleFunc("GET /api/v1/checkpoints/member", handlers.GetCheckpointsByMemberIdController)
 	mux.HandleFunc("PATCH /api/v1/checkpoints", handlers.UpdateCheckpointController)
 	mux.HandleFunc("DELETE /api/v1/checkpoints", handlers.DeleteCheckpointController)
 
 	//* Roles routes
 	mux.HandleFunc("POST /api/v1/roles", handlers.CreateRoleController)
 	mux.HandleFunc("GET /api/v1/roles", handlers.GetRoleController)
+	mux.HandleFunc("GET /api/v1/roles/event", handlers.GetRolesByEventIdController)
+	mux.HandleFunc("GET /api/v1/roles/member", handlers.GetRolesByMemberIdController)
 	mux.HandleFunc("PATCH /api/v1/roles", handlers.UpdateRoleController)
 	mux.HandleFunc("DELETE /api/v1/roles", handlers.DeleteRoleController)
 

@@ -19,7 +19,7 @@ func CreateInvitationController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statusCode, err := pkg.CreateInvitation(&my_invitation)
+	pg_invitations, statusCode, err := pkg.CreateInvitation(&my_invitation)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -30,7 +30,7 @@ func CreateInvitationController(w http.ResponseWriter, r *http.Request) {
 
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(http.StatusCreated)
-	successResponse.SetData(my_invitation)
+	successResponse.SetData(pg_invitations)
 	successResponse.SetMessage("Invitation created successfully")
 	successResponse.JSON(w)
 }
@@ -45,7 +45,7 @@ func GetInvitationController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	invitation, statusCode, err := pkg.GetInvitation(code)
+	pg_invitations, statusCode, err := pkg.GetInvitation(code)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -56,7 +56,7 @@ func GetInvitationController(w http.ResponseWriter, r *http.Request) {
 
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(http.StatusOK)
-	successResponse.SetData(invitation)
+	successResponse.SetData(pg_invitations)
 	successResponse.SetMessage("Invitation fetched successfully")
 	successResponse.JSON(w)
 }
@@ -72,7 +72,7 @@ func UpdateInvitationController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statusCode, err := pkg.UpdateInvitation(&my_invitation)
+	pg_invitations, statusCode, err := pkg.UpdateInvitation(&my_invitation)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -83,7 +83,7 @@ func UpdateInvitationController(w http.ResponseWriter, r *http.Request) {
 
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(http.StatusOK)
-	successResponse.SetData(my_invitation)
+	successResponse.SetData(pg_invitations)
 	successResponse.SetMessage("Invitation updated successfully")
 	successResponse.JSON(w)
 }

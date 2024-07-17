@@ -1,13 +1,13 @@
 package pkg
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
+	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
-	"os"
 
-	response "github.com/Mahaveer86619/Everli/pkg/Response"
+	db "github.com/Mahaveer86619/Everli/pkg/DB"
 	"github.com/google/uuid"
 )
 
@@ -15,194 +15,201 @@ type Role struct {
 	Id        string `json:"id"`
 	EventId   string `json:"event_id"`
 	MemberId  string `json:"member_id"`
-	IsAdmin   bool   `json:"is_admin"`
+	Role      string `json:"role"`
 	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }
 
-func CreateRole(role *Role) (int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/roles"
-	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+func CreateRole(role *Role) (*Role, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
 
-	// Generate a unique ID for the role
-	id := uuid.New().String()
-	role.Id = id
+	query := `
+		INSERT INTO roles (id, event_id, member_id, role, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6) RETURNING *
+	`
 
-	// Marshal user data to JSON
-	jsonData, err := json.Marshal(role)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
+	// Generate a unique ID for the event
+	role.Id = uuid.New().String()
+
+	if err := conn.QueryRow(
+		ctx,
+		query,
+		role.Id,
+		role.EventId,
+		role.MemberId,
+		role.Role,
+		role.CreatedAt,
+		role.UpdatedAt).Scan(
+		&role.Id,
+		&role.EventId,
+		&role.MemberId,
+		&role.Role,
+		&role.CreatedAt,
+		&role.UpdatedAt,
+	); err != nil {
+		log.Panic(err)
+		return nil, http.StatusInternalServerError, fmt.Errorf("error creating checkpoint: %w", err)
 	}
 
-	// Create HTTP request
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(jsonData))
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-
-	// Set headers
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", "Bearer "+serviceKey)
-	req.Header.Set("Content-Type", "application/json")
-
-	// Send request and handle response
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-	defer resp.Body.Close()
-
-	// Check response status code
-	if resp.StatusCode != http.StatusCreated {
-		var supabaseErr response.SupabaseError
-		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
-			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-		}
-		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
-	}
-
-	return -1, nil
+	return role, http.StatusCreated, nil
 }
 
-func GetRole(role_id string) (*Role, int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/roles"
-	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+func GetRoleById(role_id string) (*Role, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
 
-	// Create HTTP request
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		fmt.Println(err)
-		return nil, -1, err
-	}
-
-	// Set headers
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", "Bearer "+serviceKey)
-
-	// Add query parameters
-	q := req.URL.Query()
-	q.Add("id", "eq."+role_id)
-	q.Add("select", "*")
-	req.URL.RawQuery = q.Encode()
-
-	// Send request and handle response
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return nil, -1, err
-	}
-	defer resp.Body.Close()
-
-	// Check response status code
-	if resp.StatusCode != http.StatusOK {
-		var supabaseErr response.SupabaseError
-		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
-			return nil, resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	query := `
+	  SELECT *
+	  FROM roles
+	  WHERE id = $1
+	`
+	var role Role
+	if err := conn.QueryRow(
+		ctx,
+		query,
+		role_id,
+	).Scan(
+		&role.Id,
+		&role.EventId,
+		&role.MemberId,
+		&role.Role,
+		&role.CreatedAt,
+		&role.UpdatedAt,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusNotFound, fmt.Errorf("role not found with id: %s", role_id)
 		}
-		return nil, resp.StatusCode, fmt.Errorf(supabaseErr.Message)
+		return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
 	}
+
+	return &role, http.StatusOK, nil
+}
+
+func GetRolesByEventId(event_id string) ([]Role, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
+
+	query := `
+	  SELECT *
+	  FROM roles
+	  WHERE event_id = $1
+	`
+
+	rows, err := conn.Query(ctx, query, event_id)
+	if err != nil {
+		fmt.Print("error getting members: %w", err)
+	}
+	defer rows.Close()
 
 	var roles []Role
-	err = json.NewDecoder(resp.Body).Decode(&roles)
-	if err != nil {
-		fmt.Println(err)
-		return nil, -1, err
+	for rows.Next() {
+		var role Role
+		if err := rows.Scan(
+			&role.Id,
+			&role.EventId,
+			&role.MemberId,
+			&role.Role,
+			&role.CreatedAt,
+			&role.UpdatedAt,
+		); err != nil {
+			return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+		}
+
+		roles = append(roles, role)
 	}
 
-	return &roles[0], -1, nil
+	return roles, http.StatusOK, nil
 }
 
-func UpdateRole(role *Role) (int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/roles"
-	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+func GetRolesByMemberId(member_id string) ([]Role, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
 
-	// Marshal user data to JSON
-	jsonData, err := json.Marshal(role)
+	query := `
+	  SELECT *
+	  FROM roles
+	  WHERE member_id = $1
+	`
+
+	rows, err := conn.Query(ctx, query, member_id)
 	if err != nil {
-		fmt.Println(err)
-		return -1, err
+		fmt.Print("error getting members: %w", err)
 	}
+	defer rows.Close()
 
-	// Create HTTP request
-	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewReader(jsonData))
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
+	var roles []Role
 
-	// Set headers
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", "Bearer "+serviceKey)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Prefer", "resolution=merge-duplicates")
-
-	// Add query parameters (optional)
-	q := req.URL.Query()
-	q.Add("id", "eq."+role.Id)
-	req.URL.RawQuery = q.Encode()
-
-	// Send request and handle response
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-	defer resp.Body.Close()
-
-	// Check response status code
-	if resp.StatusCode != 204 {
-		var supabaseErr response.SupabaseError
-		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
-			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	for rows.Next() {
+		var role Role
+		if err := rows.Scan(
+			&role.Id,
+			&role.EventId,
+			&role.MemberId,
+			&role.Role,
+			&role.CreatedAt,
+			&role.UpdatedAt,
+		); err != nil {
+			return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
 		}
-		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
+
+		roles = append(roles, role)
 	}
 
-	return -1, nil
+	return roles, http.StatusOK, nil
+}
+
+func UpdateRole(role *Role) (*Role, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
+
+	query := `UPDATE invitations 
+	SET event_id = $1, member_id = $2, role = $3, created_at = $4, updated_at = $5
+	WHERE id = $6 RETURNING *
+	`
+
+	if err := conn.QueryRow(
+		ctx,
+		query,
+		role.EventId,
+		role.MemberId,
+		role.Role,
+		role.CreatedAt,
+		role.UpdatedAt,
+		role.Id,
+	).Scan(
+		&role.Id,
+		&role.EventId,
+		&role.MemberId,
+		&role.Role,
+		&role.CreatedAt,
+		&role.UpdatedAt,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusNotFound, fmt.Errorf("role not found with id: %s", role.Id)
+		}
+		return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+	}
+
+	return role, http.StatusOK, nil
 }
 
 func DeleteRole(role_id string) (int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/roles"
-	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+	conn := db.GetDBConnection()
+	ctx := context.Background()
 
-	// Create HTTP request
-	req, err := http.NewRequest(http.MethodDelete, url, nil)
+	query := "DELETE FROM roles WHERE id = $1"
+
+	result, err := conn.Exec(ctx, query, role_id)
 	if err != nil {
-		fmt.Println(err)
-		return -1, err
+		return http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
 	}
 
-	// Set headers
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", "Bearer "+serviceKey)
+	rowsAffected := result.RowsAffected()
 
-	// Add query parameters
-	q := req.URL.Query()
-	q.Add("id", "eq."+role_id)
-	req.URL.RawQuery = q.Encode()
-
-	// Send request and handle response
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-	defer resp.Body.Close()
-
-	// Check response status code
-	if resp.StatusCode != http.StatusNoContent {
-		var supabaseErr response.SupabaseError
-		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
-			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-		}
-		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
+	if rowsAffected == 0 {
+		return http.StatusNotFound, fmt.Errorf("role not found with id: %s", role_id)
 	}
 
-	return -1, nil
+	return http.StatusNoContent, nil
 }

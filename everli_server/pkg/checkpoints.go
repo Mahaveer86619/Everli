@@ -1,13 +1,13 @@
 package pkg
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
+	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
-	"os"
 
-	response "github.com/Mahaveer86619/Everli/pkg/Response"
+	db "github.com/Mahaveer86619/Everli/pkg/DB"
 	"github.com/google/uuid"
 )
 
@@ -18,194 +18,219 @@ type Checkpoint struct {
 	Goal         string `json:"goal"`
 	Description  string `json:"description"`
 	DueDate      string `json:"due_date"`
-	Status       bool   `json:"status"`
+	Status       string `json:"status"`
 	CreatedAt    string `json:"created_at"`
+	UpdatedAt    string `json:"updated_at"`
 }
 
-func CreateCheckpoint(checkpoint *Checkpoint) (int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/checkpoints"
-	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+func CreateCheckpoint(checkpoint *Checkpoint) (*Checkpoint, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
 
-	// Generate a unique ID for the checkpoint
-	id := uuid.New().String()
-	checkpoint.Id = id
+	query := `
+		INSERT INTO checkpoints (id, assignment_id, member_id, goal, description, due_date, status, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *
+	`
 
-	// Marshal user data to JSON
-	jsonData, err := json.Marshal(checkpoint)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
+	// Generate a unique ID for the event
+	checkpoint.Id = uuid.New().String()
+
+	if err := conn.QueryRow(
+		ctx,
+		query,
+		checkpoint.Id,
+		checkpoint.AssignmentId,
+		checkpoint.MemberId,
+		checkpoint.Goal,
+		checkpoint.Description,
+		checkpoint.DueDate,
+		checkpoint.Status,
+		checkpoint.CreatedAt,
+		checkpoint.UpdatedAt).Scan(
+		&checkpoint.Id,
+		&checkpoint.AssignmentId,
+		&checkpoint.MemberId,
+		&checkpoint.Goal,
+		&checkpoint.Description,
+		&checkpoint.DueDate,
+		&checkpoint.Status,
+		&checkpoint.CreatedAt,
+		&checkpoint.UpdatedAt); err != nil {
+		log.Panic(err)
+		return nil, http.StatusInternalServerError, fmt.Errorf("error creating checkpoint: %w", err)
 	}
 
-	// Create HTTP request
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(jsonData))
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-
-	// Set headers
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", "Bearer "+serviceKey)
-	req.Header.Set("Content-Type", "application/json")
-
-	// Send request and handle response
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-	defer resp.Body.Close()
-
-	// Check response status code
-	if resp.StatusCode != http.StatusCreated {
-		var supabaseErr response.SupabaseError
-		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
-			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-		}
-		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
-	}
-
-	return -1, nil
+	return checkpoint, http.StatusCreated, nil
 }
 
 func GetCheckpoint(checkpoint_id string) (*Checkpoint, int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/checkpoints"
-	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+	conn := db.GetDBConnection()
+	ctx := context.Background()
 
-	// Create HTTP request
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		fmt.Println(err)
-		return nil, -1, err
-	}
-
-	// Set headers
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", "Bearer "+serviceKey)
-
-	// Add query parameters
-	q := req.URL.Query()
-	q.Add("id", "eq."+checkpoint_id)
-	q.Add("select", "*")
-	req.URL.RawQuery = q.Encode()
-
-	// Send request and handle response
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return nil, -1, err
-	}
-	defer resp.Body.Close()
-
-	// Check response status code
-	if resp.StatusCode != http.StatusOK {
-		var supabaseErr response.SupabaseError
-		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
-			return nil, resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	query := `
+	  SELECT *
+	  FROM checkpoints
+	  WHERE id = $1
+	`
+	var checkpoint Checkpoint
+	if err := conn.QueryRow(
+		ctx,
+		query,
+		checkpoint_id,
+	).Scan(
+		&checkpoint.Id,
+		&checkpoint.AssignmentId,
+		&checkpoint.MemberId,
+		&checkpoint.Goal,
+		&checkpoint.Description,
+		&checkpoint.DueDate,
+		&checkpoint.Status,
+		&checkpoint.CreatedAt,
+		&checkpoint.UpdatedAt,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusNotFound, fmt.Errorf("checkpoint not found with id: %s", checkpoint_id)
 		}
-		return nil, resp.StatusCode, fmt.Errorf(supabaseErr.Message)
+		return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
 	}
 
-	var checkpoints []Checkpoint
-	err = json.NewDecoder(resp.Body).Decode(&checkpoints)
-	if err != nil {
-		fmt.Println(err)
-		return nil, -1, err
-	}
-
-	return &checkpoints[0], -1, nil
+	return &checkpoint, http.StatusOK, nil
 }
 
-func UpdateCheckpoint(checkpoint *Checkpoint) (int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/checkpoints"
-	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+func GetCheckpointsByMemberId(member_id string) ([]Checkpoint, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
 
-	// Marshal user data to JSON
-	jsonData, err := json.Marshal(checkpoint)
+	query := `
+	  SELECT *
+	  FROM checkpoints
+	  WHERE member_id = $1
+	`
+
+	rows, err := conn.Query(ctx, query, member_id)
 	if err != nil {
-		fmt.Println(err)
-		return -1, err
+		fmt.Print("error getting checkpoints: %w", err)
 	}
+	defer rows.Close()
 
-	// Create HTTP request
-	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewReader(jsonData))
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-
-	// Set headers
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", "Bearer "+serviceKey)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Prefer", "resolution=merge-duplicates")
-
-	// Add query parameters
-	q := req.URL.Query()
-	q.Add("id", "eq."+checkpoint.Id)
-	req.URL.RawQuery = q.Encode()
-
-	// Send request and handle response
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-	defer resp.Body.Close()
-
-	// Check response status code
-	if resp.StatusCode != http.StatusNoContent {
-		var supabaseErr response.SupabaseError
-		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
-			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	var checkpoints []Checkpoint
+	for rows.Next() {
+		var checkpoint Checkpoint
+		if err := rows.Scan(
+			&checkpoint.Id,
+			&checkpoint.AssignmentId,
+			&checkpoint.MemberId,
+			&checkpoint.Goal,
+			&checkpoint.Description,
+			&checkpoint.DueDate,
+			&checkpoint.Status,
+			&checkpoint.CreatedAt,
+			&checkpoint.UpdatedAt,
+		); err != nil {
+			return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
 		}
-		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
+
+		checkpoints = append(checkpoints, checkpoint)
 	}
 
-	return -1, nil
+	return checkpoints, http.StatusOK, nil
+}
+
+func GetCheckpointsByAssignmentId(assignment_id string) ([]Checkpoint, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
+
+	query := `
+	  SELECT *
+	  FROM checkpoints
+	  WHERE assignment_id = $1
+	`
+
+	rows, err := conn.Query(ctx, query, assignment_id)
+	if err != nil {
+		fmt.Print("error getting checkpoints: %w", err)
+	}
+	defer rows.Close()
+
+	var checkpoints []Checkpoint
+	for rows.Next() {
+		var checkpoint Checkpoint
+		if err := rows.Scan(
+			&checkpoint.Id,
+			&checkpoint.AssignmentId,
+			&checkpoint.MemberId,
+			&checkpoint.Goal,
+			&checkpoint.Description,
+			&checkpoint.DueDate,
+			&checkpoint.Status,
+			&checkpoint.CreatedAt,
+			&checkpoint.UpdatedAt,
+		); err != nil {
+			return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+		}
+
+		checkpoints = append(checkpoints, checkpoint)
+	}
+
+	return checkpoints, http.StatusOK, nil
+}
+
+func UpdateCheckpoint(checkpoint *Checkpoint) (*Checkpoint, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
+
+	query := `UPDATE checkpoints 
+	SET assignment_id = $1, member_id = $2, goal = $3, description = $4, due_date = $5, status = $6, created_at = $7, updated_at = $8
+	WHERE id = $9 RETURNING *
+	`
+
+	if err := conn.QueryRow(
+		ctx,
+		query,
+		checkpoint.AssignmentId,
+		checkpoint.MemberId,
+		checkpoint.Goal,
+		checkpoint.Description,
+		checkpoint.DueDate,
+		checkpoint.Status,
+		checkpoint.CreatedAt,
+		checkpoint.UpdatedAt,
+		checkpoint.Id).Scan(
+		&checkpoint.Id,
+		&checkpoint.AssignmentId,
+		&checkpoint.MemberId,
+		&checkpoint.Goal,
+		&checkpoint.Description,
+		&checkpoint.DueDate,
+		&checkpoint.Status,
+		&checkpoint.CreatedAt,
+		&checkpoint.UpdatedAt,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusNotFound, fmt.Errorf("checkpoint not found with id: %s", checkpoint.Id)
+		}
+		return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+	}
+
+	return checkpoint, http.StatusOK, nil
 }
 
 func DeleteCheckpoint(checkpoint_id string) (int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/checkpoints"
-	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+	conn := db.GetDBConnection()
+	ctx := context.Background()
 
-	// Create HTTP request
-	req, err := http.NewRequest(http.MethodDelete, url, nil)
+	query := "DELETE FROM checkpoints WHERE id = $1"
+
+	result, err := conn.Exec(ctx, query, checkpoint_id)
 	if err != nil {
-		fmt.Println(err)
-		return -1, err
+		return http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
 	}
 
-	// Set headers
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", "Bearer "+serviceKey)
+	rowsAffected := result.RowsAffected()
 
-	// Add query parameters
-	q := req.URL.Query()
-	q.Add("id", "eq."+checkpoint_id)
-	req.URL.RawQuery = q.Encode()
-
-	// Send request and handle response
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-	defer resp.Body.Close()
-
-	// Check response status code
-	if resp.StatusCode != http.StatusNoContent {
-		var supabaseErr response.SupabaseError
-		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
-			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-		}
-		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
+	if rowsAffected == 0 {
+		return http.StatusNotFound, fmt.Errorf("checkpoint not found with id: %s", checkpoint_id)
 	}
 
-	return -1, nil
+	return http.StatusNoContent, nil
 }

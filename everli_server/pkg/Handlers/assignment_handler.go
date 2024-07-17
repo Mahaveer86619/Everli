@@ -19,7 +19,7 @@ func CreateAssignmentController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statusCode, err := pkg.CreateAssignment(&my_assignment)
+	pg_assignment, statusCode, err := pkg.CreateAssignment(&my_assignment)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -30,8 +30,8 @@ func CreateAssignmentController(w http.ResponseWriter, r *http.Request) {
 
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(http.StatusCreated)
-	successResponse.SetData(my_assignment)
-	successResponse.SetMessage("Assignment updated successfully")
+	successResponse.SetData(pg_assignment)
+	successResponse.SetMessage("Assignment created successfully")
 	successResponse.JSON(w)
 }
 
@@ -61,6 +61,58 @@ func GetAssignmentController(w http.ResponseWriter, r *http.Request) {
 	successResponse.JSON(w)
 }
 
+func GetAssignmentsByMemberIdController(w http.ResponseWriter, r *http.Request) {
+	member_id := r.URL.Query().Get("member_id")
+	if member_id == "" {
+		failureResponse := resp.Failure{}
+		failureResponse.SetStatusCode(http.StatusBadRequest)
+		failureResponse.SetMessage("Invalid request body: member_id is required")
+		failureResponse.JSON(w)
+		return
+	}
+
+	assignments, statusCode, err := pkg.GetAssignmentsByMemberId(member_id)
+	if err != nil {
+		failureResponse := resp.Failure{}
+		failureResponse.SetStatusCode(statusCode)
+		failureResponse.SetMessage(err.Error())
+		failureResponse.JSON(w)
+		return
+	}
+
+	successResponse := &resp.Success{}
+	successResponse.SetStatusCode(http.StatusOK)
+	successResponse.SetData(assignments)
+	successResponse.SetMessage("Assignments fetched successfully")
+	successResponse.JSON(w)
+}
+
+func GetAssignmentsByEventIdController(w http.ResponseWriter, r *http.Request) {
+	event_id := r.URL.Query().Get("event_id")
+	if event_id == "" {
+		failureResponse := resp.Failure{}
+		failureResponse.SetStatusCode(http.StatusBadRequest)
+		failureResponse.SetMessage("Invalid request body: event_id is required")
+		failureResponse.JSON(w)
+		return
+	}
+
+	assignments, statusCode, err := pkg.GetAssignmentsByEventId(event_id)
+	if err != nil {
+		failureResponse := resp.Failure{}
+		failureResponse.SetStatusCode(statusCode)
+		failureResponse.SetMessage(err.Error())
+		failureResponse.JSON(w)
+		return
+	}
+
+	successResponse := &resp.Success{}
+	successResponse.SetStatusCode(http.StatusOK)
+	successResponse.SetData(assignments)
+	successResponse.SetMessage("Assignments fetched successfully")
+	successResponse.JSON(w)
+}
+
 func UpdateAssignmentController(w http.ResponseWriter, r *http.Request) {
 	var my_assignment pkg.Assignment
 	err := json.NewDecoder(r.Body).Decode(&my_assignment)
@@ -72,7 +124,7 @@ func UpdateAssignmentController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statusCode, err := pkg.UpdateAssignment(&my_assignment)
+	pg_assignment, statusCode, err := pkg.UpdateAssignment(&my_assignment)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -83,7 +135,7 @@ func UpdateAssignmentController(w http.ResponseWriter, r *http.Request) {
 
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(http.StatusOK)
-	successResponse.SetData(my_assignment)
+	successResponse.SetData(pg_assignment)
 	successResponse.SetMessage("Assignment updated successfully")
 	successResponse.JSON(w)
 }

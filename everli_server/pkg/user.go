@@ -142,7 +142,8 @@ func GetUserByID(userID string) (*MyUser, int, error) {
 	if err := conn.QueryRow(
 		ctx,
 		query,
-		userID).Scan(
+		userID,
+	).Scan(
 		&pg_return.Id,
 		&pg_return.Firebase_uid,
 		&pg_return.Username,
@@ -151,7 +152,8 @@ func GetUserByID(userID string) (*MyUser, int, error) {
 		&pg_return.Bio,
 		&pg_return.Skills,
 		&pg_return.Created_at,
-		&pg_return.Updated_at); err != nil {
+		&pg_return.Updated_at,
+	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, http.StatusNotFound, fmt.Errorf("user not found with id: %s", userID)
 		}
@@ -219,9 +221,15 @@ func DeleteUser(userId string) (int, error) {
 
 	query := "DELETE FROM profiles WHERE id = $1"
 
-	_, err := conn.Exec(ctx, query, userId)
+	result, err := conn.Exec(ctx, query, userId)
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
+	}
+
+	rowsAffected := result.RowsAffected()
+
+	if rowsAffected == 0 {
+		return http.StatusNotFound, fmt.Errorf("user not found with id: %s", userId)
 	}
 
 	return http.StatusNoContent, nil

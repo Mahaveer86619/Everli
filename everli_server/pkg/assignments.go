@@ -1,13 +1,13 @@
 package pkg
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
+	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
-	"os"
 
-	response "github.com/Mahaveer86619/Everli/pkg/Response"
+	db "github.com/Mahaveer86619/Everli/pkg/DB"
 	"github.com/google/uuid"
 )
 
@@ -20,192 +20,217 @@ type Assignment struct {
 	DueDate     string `json:"due_date"`
 	Status      string `json:"status"`
 	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
 }
 
-func CreateAssignment(assignment *Assignment) (int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/assignments"
-	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+func CreateAssignment(assignment *Assignment) (*Assignment, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
 
-	// Generate a unique ID for the assignment
-	id := uuid.New().String()
-	assignment.Id = id
+	query := `
+		INSERT INTO assignments (id, event_id, member_id, goal, description, due_date, status, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *
+	`
 
-	// Marshal user data to JSON
-	jsonData, err := json.Marshal(assignment)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
+	// Generate a unique ID for the event
+	assignment.Id = uuid.New().String()
+
+	if err := conn.QueryRow(
+		ctx,
+		query,
+		assignment.Id,
+		assignment.EventId,
+		assignment.MemberId,
+		assignment.Goal,
+		assignment.Description,
+		assignment.DueDate,
+		assignment.Status,
+		assignment.CreatedAt,
+		assignment.UpdatedAt).Scan(
+		&assignment.Id,
+		&assignment.EventId,
+		&assignment.MemberId,
+		&assignment.Goal,
+		&assignment.Description,
+		&assignment.DueDate,
+		&assignment.Status,
+		&assignment.CreatedAt,
+		&assignment.UpdatedAt); err != nil {
+		log.Panic(err)
+		return nil, http.StatusInternalServerError, fmt.Errorf("error creating assignment: %w", err)
 	}
 
-	// Create HTTP request
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(jsonData))
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-
-	// Set headers
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", "Bearer "+serviceKey)
-	req.Header.Set("Content-Type", "application/json")
-
-	// Send request and handle response
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-	defer resp.Body.Close()
-
-	// Check response status code
-	if resp.StatusCode != http.StatusCreated {
-		var supabaseErr response.SupabaseError
-		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
-			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-		}
-		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
-	}
-
-	return -1, nil
+	return assignment, http.StatusCreated, nil
 }
 
 func GetAssignment(assignment_id string) (*Assignment, int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/assignments"
-	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+	conn := db.GetDBConnection()
+	ctx := context.Background()
 
-	// Create HTTP request
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		fmt.Println(err)
-		return nil, -1, err
-	}
-
-	// Set headers
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", "Bearer "+serviceKey)
-
-	// Add query parameters
-	q := req.URL.Query()
-	q.Add("id", "eq."+assignment_id)
-	q.Add("select", "*")
-	req.URL.RawQuery = q.Encode()
-
-	// Send request and handle response
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return nil, -1, err
-	}
-	defer resp.Body.Close()
-
-	// Check response status code
-	if resp.StatusCode != http.StatusOK {
-		var supabaseErr response.SupabaseError
-		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
-			return nil, resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	query := `
+	  SELECT *
+	  FROM assignments
+	  WHERE id = $1
+	`
+	var assignment Assignment
+	if err := conn.QueryRow(
+		ctx,
+		query,
+		assignment_id,
+	).Scan(
+		&assignment.Id,
+		&assignment.EventId,
+		&assignment.MemberId,
+		&assignment.Goal,
+		&assignment.Description,
+		&assignment.DueDate,
+		&assignment.Status,
+		&assignment.CreatedAt,
+		&assignment.UpdatedAt,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusNotFound, fmt.Errorf("assignment not found with id: %s", assignment_id)
 		}
-		return nil, resp.StatusCode, fmt.Errorf(supabaseErr.Message)
+		return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
 	}
 
-	var assignments []Assignment
-	err = json.NewDecoder(resp.Body).Decode(&assignments)
-	if err != nil {
-		fmt.Println(err)
-		return nil, -1, err
-	}
-
-	return &assignments[0], -1, nil
+	return &assignment, http.StatusOK, nil
 }
 
-func UpdateAssignment(assignment *Assignment) (int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/assignments"
-	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+func GetAssignmentsByEventId(event_id string) ([]Assignment, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
 
-	// Marshal user data to JSON
-	jsonData, err := json.Marshal(assignment)
+	query := `
+	  SELECT *
+	  FROM assignments
+	  WHERE event_id = $1
+	`
+
+	rows, err := conn.Query(ctx, query, event_id)
 	if err != nil {
-		fmt.Println(err)
-		return -1, err
+		fmt.Print("error getting assignments: %w", err)
 	}
+	defer rows.Close()
 
-	// Create HTTP request
-	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewReader(jsonData))
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-
-	// Set headers
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", "Bearer "+serviceKey)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Prefer", "resolution=merge-duplicates")
-
-	// Add query parameters (optional)
-	q := req.URL.Query()
-	q.Add("id", "eq."+assignment.Id)
-	req.URL.RawQuery = q.Encode()
-
-	// Send request and handle response
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-	defer resp.Body.Close()
-
-	// Check response status code
-	if resp.StatusCode != http.StatusNoContent {
-		var supabaseErr response.SupabaseError
-		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
-			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	var assignments []Assignment
+	for rows.Next() {
+		var assignment Assignment
+		if err := rows.Scan(
+			&assignment.Id,
+			&assignment.EventId,
+			&assignment.MemberId,
+			&assignment.Goal,
+			&assignment.Description,
+			&assignment.DueDate,
+			&assignment.Status,
+			&assignment.CreatedAt,
+			&assignment.UpdatedAt,
+		); err != nil {
+			return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
 		}
-		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
+
+		assignments = append(assignments, assignment)
 	}
 
-	return -1, nil
+	return assignments, http.StatusOK, nil
+}
+
+func GetAssignmentsByMemberId(member_id string) ([]Assignment, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
+
+	query := `
+	  SELECT *
+	  FROM assignments
+	  WHERE member_id = $1
+	`
+
+	rows, err := conn.Query(ctx, query, member_id)
+	if err != nil {
+		fmt.Print("error getting assignments: %w", err)
+	}
+	defer rows.Close()
+
+	var assignments []Assignment
+	for rows.Next() {
+		var assignment Assignment
+		if err := rows.Scan(
+			&assignment.Id,
+			&assignment.EventId,
+			&assignment.MemberId,
+			&assignment.Goal,
+			&assignment.Description,
+			&assignment.DueDate,
+			&assignment.Status,
+			&assignment.CreatedAt,
+			&assignment.UpdatedAt,
+		); err != nil {
+			return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+		}
+
+		assignments = append(assignments, assignment)
+	}
+
+	return assignments, http.StatusOK, nil
+}
+
+func UpdateAssignment(assignment *Assignment) (*Assignment, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
+
+	query := `UPDATE assignments 
+	SET event_id = $1, member_id = $2, goal = $3, description = $4, due_date = $5, status = $6, created_at = $7, updated_at = $8
+	WHERE id = $9 RETURNING *
+	`
+
+	if err := conn.QueryRow(
+		ctx,
+		query,
+		assignment.EventId,
+		assignment.MemberId,
+		assignment.Goal,
+		assignment.Description,
+		assignment.DueDate,
+		assignment.Status,
+		assignment.CreatedAt,
+		assignment.UpdatedAt,
+		assignment.Id).Scan(
+		&assignment.Id,
+		&assignment.EventId,
+		&assignment.MemberId,
+		&assignment.Goal,
+		&assignment.Description,
+		&assignment.DueDate,
+		&assignment.Status,
+		&assignment.CreatedAt,
+		&assignment.UpdatedAt,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusNotFound, fmt.Errorf("assignment not found with id: %s", assignment.Id)
+		}
+		return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+	}
+
+	return assignment, http.StatusOK, nil
 }
 
 func DeleteAssignment(assignment_id string) (int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/assignments"
-	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+	conn := db.GetDBConnection()
+	ctx := context.Background()
 
-	// Create HTTP request
-	req, err := http.NewRequest(http.MethodDelete, url, nil)
+	query := "DELETE FROM assignments WHERE id = $1"
+
+	result, err := conn.Exec(ctx, query, assignment_id)
 	if err != nil {
-		fmt.Println(err)
-		return -1, err
+		return http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
 	}
 
-	// Set headers
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", "Bearer "+serviceKey)
+	rowsAffected := result.RowsAffected()
 
-	// Add query parameters
-	q := req.URL.Query()
-	q.Add("id", "eq."+assignment_id)
-	req.URL.RawQuery = q.Encode()
-
-	// Send request and handle response
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-	defer resp.Body.Close()
-
-	// Check response status code
-	if resp.StatusCode != http.StatusNoContent {
-		var supabaseErr response.SupabaseError
-		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
-			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-		}
-		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
+	if rowsAffected == 0 {
+		return http.StatusNotFound, fmt.Errorf("assignment not found with id: %s", assignment_id)
 	}
 
-	return -1, nil
+	return http.StatusNoContent, nil
 }

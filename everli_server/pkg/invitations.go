@@ -1,13 +1,13 @@
 package pkg
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
+	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
-	"os"
 
-	response "github.com/Mahaveer86619/Everli/pkg/Response"
+	db "github.com/Mahaveer86619/Everli/pkg/DB"
 	"github.com/google/uuid"
 )
 
@@ -17,192 +17,126 @@ type Invitation struct {
 	Code       string `json:"code"`
 	Role       string `json:"role"`
 	ExpiryDate string `json:"expiry"`
+	CreatedAt  string `json:"created_at"`
 }
 
-func CreateInvitation(invitation *Invitation) (int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/invitations"
-	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+func CreateInvitation(invitation *Invitation) (*Invitation, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
 
-	// Generate a unique ID for the invitation
-	id := uuid.New().String()
-	invitation.Id = id
+	query := `
+		INSERT INTO invitations (id, event_id, code, role, expiry, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
+	`
 
-	// Marshal user data to JSON
-	jsonData, err := json.Marshal(invitation)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
+	// Generate a unique ID for the event
+	invitation.Id = uuid.New().String()
+
+	if err := conn.QueryRow(
+		ctx,
+		query,
+		invitation.Id,
+		invitation.EventId,
+		invitation.Code,
+		invitation.Role,
+		invitation.ExpiryDate,
+		invitation.CreatedAt,
+	).Scan(
+		&invitation.Id,
+		&invitation.EventId,
+		&invitation.Code,
+		&invitation.Role,
+		&invitation.ExpiryDate,
+		&invitation.CreatedAt,
+	); err != nil {
+		log.Panic(err)
+		return nil, http.StatusInternalServerError, fmt.Errorf("error creating checkpoint: %w", err)
 	}
 
-	// Create HTTP request
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(jsonData))
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-
-	// Set headers
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", "Bearer "+serviceKey)
-	req.Header.Set("Content-Type", "application/json")
-
-	// Send request and handle response
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-	defer resp.Body.Close()
-
-	// Check response status code
-	if resp.StatusCode != http.StatusCreated {
-		var supabaseErr response.SupabaseError
-		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
-			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-		}
-		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
-	}
-
-	return -1, nil
+	return invitation, http.StatusCreated, nil
 }
 
 func GetInvitation(code string) (*Invitation, int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/invitations"
-	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+	conn := db.GetDBConnection()
+	ctx := context.Background()
 
-	// Create HTTP request
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		fmt.Println(err)
-		return nil, -1, err
-	}
-
-	// Set headers
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", "Bearer "+serviceKey)
-
-	// Add query parameters
-	q := req.URL.Query()
-	q.Add("code", "eq."+code)
-	q.Add("select", "*")
-	req.URL.RawQuery = q.Encode()
-
-	// Send request and handle response
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return nil, -1, err
-	}
-	defer resp.Body.Close()
-
-	// Check response status code
-	if resp.StatusCode != http.StatusOK {
-		var supabaseErr response.SupabaseError
-		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
-			return nil, resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	query := `
+	  SELECT *
+	  FROM invitations
+	  WHERE code = $1
+	`
+	var invitation Invitation
+	if err := conn.QueryRow(
+		ctx,
+		query,
+		code,
+	).Scan(
+		&invitation.Id,
+		&invitation.EventId,
+		&invitation.Code,
+		&invitation.Role,
+		&invitation.ExpiryDate,
+		&invitation.CreatedAt,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusNotFound, fmt.Errorf("invitation not found with code: %s", code)
 		}
-		return nil, resp.StatusCode, fmt.Errorf(supabaseErr.Message)
+		return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
 	}
 
-	var invitations []Invitation
-	err = json.NewDecoder(resp.Body).Decode(&invitations)
-	if err != nil {
-		fmt.Println(err)
-		return nil, -1, err
-	}
-
-	return &invitations[0], -1, nil
+	return &invitation, http.StatusOK, nil
 }
 
-func UpdateInvitation(invitation *Invitation) (int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/invitations"
-	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+func UpdateInvitation(invitation *Invitation) (*Invitation, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
 
-	// Marshal user data to JSON
-	jsonData, err := json.Marshal(invitation)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
+	query := `UPDATE invitations 
+	SET event_id = $1, code = $2, role = $3, expiry = $4, created_at = $5, updated_at = $6
+	WHERE id = $7 RETURNING *
+	`
 
-	// Create HTTP request
-	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewReader(jsonData))
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-
-	// Set headers
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", "Bearer "+serviceKey)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Prefer", "resolution=merge-duplicates")
-
-	// Add query parameters (optional)
-	q := req.URL.Query()
-	q.Add("id", "eq."+invitation.Id)
-	req.URL.RawQuery = q.Encode()
-
-	// Send request and handle response
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-	defer resp.Body.Close()
-
-	// Check response status code
-	if resp.StatusCode != 204 {
-		var supabaseErr response.SupabaseError
-		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
-			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	if err := conn.QueryRow(
+		ctx,
+		query,
+		invitation.EventId,
+		invitation.Code,
+		invitation.Role,
+		invitation.ExpiryDate,
+		invitation.CreatedAt,
+		invitation.Id).Scan(
+		&invitation.Id,
+		&invitation.EventId,
+		&invitation.Code,
+		&invitation.Role,
+		&invitation.ExpiryDate,
+		&invitation.CreatedAt,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusNotFound, fmt.Errorf("invitation not found with id: %s", invitation.Id)
 		}
-		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
+		return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
 	}
 
-	return -1, nil
+	return invitation, http.StatusOK, nil
 }
 
 func DeleteInvitation(invitation_id string) (int, error) {
-	url := os.Getenv("SUPABASE_BASE_URL") + "/rest/v1/invitations"
-	serviceKey := os.Getenv("SUPABASE_SERVICE_KEY")
+	conn := db.GetDBConnection()
+	ctx := context.Background()
 
-	// Create HTTP request
-	req, err := http.NewRequest(http.MethodDelete, url, nil)
+	query := "DELETE FROM invitations WHERE id = $1"
+
+	result, err := conn.Exec(ctx, query, invitation_id)
 	if err != nil {
-		fmt.Println(err)
-		return -1, err
+		return http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
 	}
 
-	// Set headers
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", "Bearer "+serviceKey)
+	rowsAffected := result.RowsAffected()
 
-	// Add query parameters
-	q := req.URL.Query()
-	q.Add("id", "eq."+invitation_id)
-	req.URL.RawQuery = q.Encode()
-
-	// Send request and handle response
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-	defer resp.Body.Close()
-
-	// Check response status code
-	if resp.StatusCode != http.StatusNoContent {
-		var supabaseErr response.SupabaseError
-		if err := json.NewDecoder(resp.Body).Decode(&supabaseErr); err != nil {
-			return resp.StatusCode, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-		}
-		return resp.StatusCode, fmt.Errorf(supabaseErr.Message)
+	if rowsAffected == 0 {
+		return http.StatusNotFound, fmt.Errorf("invitation not found with id: %s", invitation_id)
 	}
 
-	return -1, nil
+	return http.StatusNoContent, nil
 }

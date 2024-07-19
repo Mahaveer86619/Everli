@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/jackc/pgx/v4"
@@ -26,7 +25,7 @@ func ConnectDB() (*pgx.Conn, error) {
 	// Connect to the database
 	conn, err := pgx.Connect(context.Background(), connString)
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v", err)
+		fmt.Printf("Unable to connect to database: %v", err)
 	}
 
 	return conn, nil

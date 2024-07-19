@@ -8,6 +8,8 @@ import (
 
 	postgres "github.com/Mahaveer86619/Everli/pkg/DB"
 	handlers "github.com/Mahaveer86619/Everli/pkg/Handlers"
+	middleware "github.com/Mahaveer86619/Everli/pkg/Middleware"
+	"github.com/jackc/pgx/v4"
 
 	"github.com/joho/godotenv"
 )
@@ -19,12 +21,18 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file:", err)
 	}
-	time.Sleep(2 * time.Second)
 
-	db, err := postgres.ConnectDB()
-	if err != nil {
-		log.Fatal("Error connecting to database:", err)
+	var db *pgx.Conn
+	for {
+		time.Sleep(2 * time.Second)
+
+		db, err = postgres.ConnectDB()
+		if err == nil {
+			break
+		}
+		fmt.Println("Error connecting to database:", err)
 	}
+
 	defer postgres.CloseDBConnection(db)
 
 	err = postgres.CreateTables(db)
@@ -39,7 +47,7 @@ func main() {
 	fmt.Println("Successfully connected to the database!")
 	handleFunctions(mux)
 
-	if err := http.ListenAndServe(":5050", mux); err != nil {
+	if err := http.ListenAndServe(":8080", mux); err != nil {
 		fmt.Println("Error running server:", err)
 	}
 }
@@ -57,50 +65,55 @@ var welcomeString = `
 `
 
 func handleFunctions(mux *http.ServeMux) {
-	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/", middleware.LoggingMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.Error(w, "Not Found", http.StatusNotFound)
+			return
+		}
 		fmt.Fprint(w, welcomeString)
-	})
+	}))
 
 	//* Users routes
-	mux.HandleFunc("POST /api/v1/users", handlers.CreateUserController)
-	mux.HandleFunc("GET /api/v1/all_users", handlers.GetAllUsersController)
-	mux.HandleFunc("GET /api/v1/users", handlers.GetUserController)
-	mux.HandleFunc("PATCH /api/v1/users", handlers.UpdateUserController)
-	mux.HandleFunc("DELETE /api/v1/users", handlers.DeleteUserController)
+	mux.HandleFunc("POST /api/v1/users", middleware.LoggingMiddleware(handlers.CreateUserController))
+	mux.HandleFunc("GET /api/v1/all_users", middleware.LoggingMiddleware(handlers.GetAllUsersController))
+	mux.HandleFunc("GET /api/v1/users", middleware.LoggingMiddleware(handlers.GetUserController))
+	mux.HandleFunc("PATCH /api/v1/users", middleware.LoggingMiddleware(handlers.UpdateUserController))
+	mux.HandleFunc("DELETE /api/v1/users", middleware.LoggingMiddleware(handlers.DeleteUserController))
 
 	//* Events routes
-	mux.HandleFunc("POST /api/v1/events", handlers.CreateEventController)
-	mux.HandleFunc("GET /api/v1/events", handlers.GetEventController)
-	mux.HandleFunc("PATCH /api/v1/events", handlers.UpdateEventController)
-	mux.HandleFunc("DELETE /api/v1/events", handlers.DeleteEventController)
+	mux.HandleFunc("POST /api/v1/events", middleware.LoggingMiddleware(handlers.CreateEventController))
+	mux.HandleFunc("GET /api/v1/events", middleware.LoggingMiddleware(handlers.GetEventController))
+	mux.HandleFunc("PATCH /api/v1/events", middleware.LoggingMiddleware(handlers.UpdateEventController))
+	mux.HandleFunc("DELETE /api/v1/events", middleware.LoggingMiddleware(handlers.DeleteEventController))
 
-	//* Assignments routes
-	mux.HandleFunc("POST /api/v1/assignments", handlers.CreateAssignmentController)
-	mux.HandleFunc("GET /api/v1/assignments", handlers.GetAssignmentController)
-	mux.HandleFunc("GET /api/v1/assignments/event", handlers.GetAssignmentsByEventIdController)
-	mux.HandleFunc("GET /api/v1/assignments/member", handlers.GetAssignmentsByMemberIdController)
-	mux.HandleFunc("PATCH /api/v1/assignments", handlers.UpdateAssignmentController)
-	mux.HandleFunc("DELETE /api/v1/assignments", handlers.DeleteAssignmentController)
+	//* Assignments routesloggingMiddleware(
+	mux.HandleFunc("POST /api/v1/assignments", middleware.LoggingMiddleware(handlers.CreateAssignmentController))
+	mux.HandleFunc("GET /api/v1/assignments", middleware.LoggingMiddleware(handlers.GetAssignmentController))
+	mux.HandleFunc("GET /api/v1/assignments/event", middleware.LoggingMiddleware(handlers.GetAssignmentsByEventIdController))
+	mux.HandleFunc("GET /api/v1/assignments/member", middleware.LoggingMiddleware(handlers.GetAssignmentsByMemberIdController))
+	mux.HandleFunc("PATCH /api/v1/assignments", middleware.LoggingMiddleware(handlers.UpdateAssignmentController))
+	mux.HandleFunc("DELETE /api/v1/assignments", middleware.LoggingMiddleware(handlers.DeleteAssignmentController))
 
 	//* Checkpoints routes
-	mux.HandleFunc("POST /api/v1/checkpoints", handlers.CreateCheckpointController)
-	mux.HandleFunc("GET /api/v1/checkpoints", handlers.GetCheckpointController)
-	mux.HandleFunc("GET /api/v1/checkpoints/assignment", handlers.GetCheckpointsByAssignmentIdController)
-	mux.HandleFunc("GET /api/v1/checkpoints/member", handlers.GetCheckpointsByMemberIdController)
-	mux.HandleFunc("PATCH /api/v1/checkpoints", handlers.UpdateCheckpointController)
-	mux.HandleFunc("DELETE /api/v1/checkpoints", handlers.DeleteCheckpointController)
+	mux.HandleFunc("POST /api/v1/checkpoints", middleware.LoggingMiddleware(handlers.CreateCheckpointController))
+	mux.HandleFunc("GET /api/v1/checkpoints", middleware.LoggingMiddleware(handlers.GetCheckpointController))
+	mux.HandleFunc("GET /api/v1/checkpoints/assignment", middleware.LoggingMiddleware(handlers.GetCheckpointsByAssignmentIdController))
+	mux.HandleFunc("GET /api/v1/checkpoints/member", middleware.LoggingMiddleware(handlers.GetCheckpointsByMemberIdController))
+	mux.HandleFunc("PATCH /api/v1/checkpoints", middleware.LoggingMiddleware(handlers.UpdateCheckpointController))
+	mux.HandleFunc("DELETE /api/v1/checkpoints", middleware.LoggingMiddleware(handlers.DeleteCheckpointController))
 
 	//* Roles routes
-	mux.HandleFunc("POST /api/v1/roles", handlers.CreateRoleController)
-	mux.HandleFunc("GET /api/v1/roles", handlers.GetRoleController)
-	mux.HandleFunc("GET /api/v1/roles/event", handlers.GetRolesByEventIdController)
-	mux.HandleFunc("GET /api/v1/roles/member", handlers.GetRolesByMemberIdController)
-	mux.HandleFunc("PATCH /api/v1/roles", handlers.UpdateRoleController)
-	mux.HandleFunc("DELETE /api/v1/roles", handlers.DeleteRoleController)
+	mux.HandleFunc("POST /api/v1/roles", middleware.LoggingMiddleware(handlers.CreateRoleController))
+	mux.HandleFunc("GET /api/v1/roles", middleware.LoggingMiddleware(handlers.GetRoleController))
+	mux.HandleFunc("GET /api/v1/roles/event", middleware.LoggingMiddleware(handlers.GetRolesByEventIdController))
+	mux.HandleFunc("GET /api/v1/roles/member", middleware.LoggingMiddleware(handlers.GetRolesByMemberIdController))
+	mux.HandleFunc("PATCH /api/v1/roles", middleware.LoggingMiddleware(handlers.UpdateRoleController))
+	mux.HandleFunc("DELETE /api/v1/roles", middleware.LoggingMiddleware(handlers.DeleteRoleController))
 
 	//* Invitations routes X
-	mux.HandleFunc("POST /api/v1/invitations", handlers.CreateInvitationController)
-	mux.HandleFunc("GET /api/v1/invitations", handlers.GetInvitationController)
-	mux.HandleFunc("PATCH /api/v1/invitations", handlers.UpdateInvitationController)
-	mux.HandleFunc("DELETE /api/v1/invitations", handlers.DeleteInvitationController)
+	mux.HandleFunc("POST /api/v1/invitations", middleware.LoggingMiddleware(handlers.CreateInvitationController))
+	mux.HandleFunc("GET /api/v1/invitations", middleware.LoggingMiddleware(handlers.GetInvitationController))
+	mux.HandleFunc("PATCH /api/v1/invitations", middleware.LoggingMiddleware(handlers.UpdateInvitationController))
+	mux.HandleFunc("DELETE /api/v1/invitations", middleware.LoggingMiddleware(handlers.DeleteInvitationController))
+
 }

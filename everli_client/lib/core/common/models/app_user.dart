@@ -6,6 +6,8 @@ class AppUser {
   final String avatarUrl;
   final String bio;
   final List<String> skills;
+  final String createdAt;
+  final String updatedAt;
 
   AppUser({
     required this.id,
@@ -15,6 +17,8 @@ class AppUser {
     required this.avatarUrl,
     required this.bio,
     required this.skills,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
   factory AppUser.fromJson(Map<String, dynamic> json) {
@@ -26,6 +30,8 @@ class AppUser {
       avatarUrl: json['avatar_url'],
       bio: json['bio'],
       skills: (json['skills'] as List).cast<String>(),
+      createdAt: json['created_at'],
+      updatedAt: json['updated_at'],
     );
   }
 
@@ -38,6 +44,8 @@ class AppUser {
       'avatar_url': avatarUrl,
       'bio': bio,
       'skills': skills.map((skill) => skill).toList(),
+      'created_at': createdAt,
+      "updated_at": updatedAt,
     };
   }
 
@@ -49,6 +57,8 @@ class AppUser {
     String? avatarUrl,
     String? bio,
     List<String>? skills,
+    String? createdAt,
+    String? updatedAt,
   }) {
     return AppUser(
       id: id ?? this.id,
@@ -58,6 +68,8 @@ class AppUser {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       bio: bio ?? this.bio,
       skills: skills ?? this.skills,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -73,6 +85,8 @@ class AppUser {
         avatarUrl: $avatarUrl,
         bio: $bio,
         skills: $skills,
+        createdAt: $createdAt,
+        updatedAt: $updatedAt,
       }
 
 ''';

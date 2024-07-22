@@ -31,7 +31,6 @@ func CreateCheckpoint(checkpoint *Checkpoint) (*Checkpoint, int, error) {
 		INSERT INTO checkpoints (id, assignment_id, member_id, goal, description, due_date, status, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *
 	`
-
 	// Generate a unique ID for the event
 	checkpoint.Id = uuid.New().String()
 

@@ -46,14 +46,12 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   _buildLoading() {
-    return Text(
-      'Everli',
-      style: TextStyle(
-        fontSize: 48.0,
-        fontWeight: FontWeight.bold,
-        color: Theme.of(context).colorScheme.onBackground,
-      )
-    ).animate().fadeIn(duration: Durations.long1).fadeOut(
+    return Text('Everli',
+            style: TextStyle(
+              fontSize: 48.0,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onBackground,
+            )).animate().fadeIn(duration: Durations.long1).fadeOut(
           duration: Durations.long1,
           delay: const Duration(seconds: 3),
         );

@@ -110,6 +110,45 @@ func GetEvent(event_id string) (*Event, int, error) {
 	return my_event, http.StatusOK, nil
 }
 
+func GetAllEvents() ([]Event, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
+
+	query := `
+	  SELECT *
+	  FROM events
+	`
+
+	rows, err := conn.Query(ctx, query)
+	if err != nil {
+		fmt.Print("error getting events: %w", err)
+	}
+	defer rows.Close()
+
+	var events []Event
+
+	for rows.Next() {
+		var event *Event
+		var pg_return event_pg
+		err := rows.Scan(
+			&pg_return.Id,
+			&pg_return.CreatorId,
+			&pg_return.Name,
+			&pg_return.Description,
+			&pg_return.Tags,
+			&pg_return.CoverImageUrl,
+			&pg_return.CreatedAt,
+			&pg_return.UpdatedAt,
+		)
+		if err != nil {
+			return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+		}
+		event = pgEventToEvent(pg_return)
+		events = append(events, *event)
+	}
+	return events, http.StatusOK, nil
+}
+
 func UpdateEvent(event *Event) (*Event, int, error) {
 	conn := db.GetDBConnection()
 	ctx := context.Background()
@@ -181,6 +220,7 @@ func pgEventToEvent(pg_event event_pg) *Event {
 		Tags:          strings.Split(pg_event.Tags, "|"),
 		CoverImageUrl: pg_event.CoverImageUrl,
 		CreatedAt:     pg_event.CreatedAt,
+		UpdatedAt:     pg_event.UpdatedAt,
 	}
 
 	return event
@@ -195,6 +235,7 @@ func EventTopgEvent(event *Event) *event_pg {
 		Tags:          strings.Join(event.Tags, "|"),
 		CoverImageUrl: event.CoverImageUrl,
 		CreatedAt:     event.CreatedAt,
+		UpdatedAt:     event.UpdatedAt,
 	}
 
 	return pg_event

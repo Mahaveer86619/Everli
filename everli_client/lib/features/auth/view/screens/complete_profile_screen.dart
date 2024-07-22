@@ -69,7 +69,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
 
   _appBar() {
     return AppBar(
-      title: const Text('Sign Up'),
+      title: const Text('Update Profile'),
       backgroundColor: Theme.of(context).colorScheme.background,
       automaticallyImplyLeading: true,
     );

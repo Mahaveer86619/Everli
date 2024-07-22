@@ -168,6 +168,47 @@ func GetUserByID(userID string) (*MyUser, int, error) {
 	return user, http.StatusOK, nil
 }
 
+func GetUserByFirebaseID(firebase_id string) (*MyUser, int, error) {
+	conn := db.GetDBConnection()
+	ctx := context.Background()
+
+	query := `
+	  SELECT *
+	  FROM profiles
+	  WHERE firebase_uid = $1
+	`
+	var pg_return pg_return
+	if err := conn.QueryRow(
+		ctx,
+		query,
+		firebase_id,
+	).Scan(
+		&pg_return.Id,
+		&pg_return.Firebase_uid,
+		&pg_return.Username,
+		&pg_return.Email,
+		&pg_return.Avatar_url,
+		&pg_return.Bio,
+		&pg_return.Skills,
+		&pg_return.Created_at,
+		&pg_return.Updated_at,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, http.StatusNotFound, fmt.Errorf("user not found with firebase_uid: %s", firebase_id)
+		}
+		return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+	}
+	// Parse skills string to slice
+	user, err := pgUserToUser(pg_return)
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("error converting user: %w", err)
+	}
+
+	return user, http.StatusOK, nil
+}
+
+
+
 func UpdateUser(user *MyUser) (*MyUser, int, error) {
 	conn := db.GetDBConnection()
 	ctx := context.Background()

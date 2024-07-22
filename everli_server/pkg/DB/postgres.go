@@ -76,7 +76,7 @@ func CreateTables(conn *pgx.Conn) error {
 			member_id UUID REFERENCES profiles(id),
 			goal TEXT NOT NULL,
 			description TEXT,
-			due_date TIMESTAMP,
+			due_date TEXT,
 			status TEXT,
   			created_at TEXT,
   			updated_at TEXT
@@ -87,7 +87,7 @@ func CreateTables(conn *pgx.Conn) error {
 			member_id UUID REFERENCES profiles(id) NOT NULL,
 			goal TEXT NOT NULL,
 			description TEXT,
-			due_date TIMESTAMP,
+			due_date TEXT,
 			status TEXT,
   			created_at TEXT,
   			updated_at TEXT

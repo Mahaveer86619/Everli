@@ -93,6 +93,8 @@ class AppUserCubit extends Cubit<AppUserState> {
         avatarUrl: '',
         bio: '',
         skills: [],
+        createdAt: '',
+        updatedAt: ''
       );
     }
   }
@@ -108,14 +110,16 @@ class AppUserCubit extends Cubit<AppUserState> {
         return res.data!;
       } else {
         return AppUser(
-          id: '',
-          firebaseUid: '',
-          username: '',
-          email: '',
-          avatarUrl: '',
-          bio: '',
-          skills: [],
-        );
+        id: '',
+        firebaseUid: '',
+        username: '',
+        email: '',
+        avatarUrl: '',
+        bio: '',
+        skills: [],
+        createdAt: '',
+        updatedAt: ''
+      );
       }
     } else {
       return AppUser(
@@ -126,6 +130,8 @@ class AppUserCubit extends Cubit<AppUserState> {
         avatarUrl: '',
         bio: '',
         skills: [],
+        createdAt: '',
+        updatedAt: ''
       );
     }
   }

@@ -13,7 +13,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-// import 'package:http/http.dart' as http;
+import 'package:http/http.dart' as http;
 
 void main() async {
   await setup();
@@ -35,13 +35,13 @@ Future<void> setup() async {
   final appUserCubit = di.sl<AppUserCubit>();
   await appUserCubit.loadUser();
 
-  // //* Test connection
-  // final response = await http.get(
-  //   Uri.parse(
-  //     "${dotenv.get('BASE_URL')}/",
-  //   ),
-  // );
-  // debugPrint(response.body);
+  //* Test connection
+  final response = await http.get(
+    Uri.parse(
+      "${dotenv.get('BASE_URL')}/",
+    ),
+  );
+  debugPrint(response.body);
 }
 
 class MyApp extends StatelessWidget {

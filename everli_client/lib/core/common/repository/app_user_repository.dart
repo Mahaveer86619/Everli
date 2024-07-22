@@ -15,7 +15,7 @@ class AppUserRepository {
     try {
       final response = await http.post(
         Uri.parse(
-          '${dotenv.get('BASE_URL')}/u/create',
+          '${dotenv.get('BASE_URL')}/api/v1/users',
         ),
         body: const JsonEncoder().convert(user.toJson()),
       );
@@ -41,8 +41,30 @@ class AppUserRepository {
     try {
       final response = await http.get(
         Uri.parse(
-          '${dotenv.get('BASE_URL')}/u/get?id=$firebaseUid',
+          '${dotenv.get('BASE_URL')}/api/v1/users/firebase_uid?firebase_uid=$firebaseUid',
         ),
+      );
+      if (response.statusCode != 200) {
+        if (response.statusCode == 404) {
+          return DataFailure('User not found', response.statusCode);
+        }
+        return DataFailure(response.body, response.statusCode);
+      }
+      return DataSuccess(
+        AppUser.fromJson(jsonDecode(response.body)),
+      );
+    } catch (e) {
+      return DataFailure(e.toString(), -1);
+    }
+  }
+
+  Future<DataState<AppUser>> updateUser(AppUser user) async {
+    try {
+      final response = await http.patch(
+        Uri.parse(
+          '${dotenv.get('BASE_URL')}/api/v1/users',
+        ),
+        body: user
       );
       if (response.statusCode != 200) {
         if (response.statusCode == 404) {

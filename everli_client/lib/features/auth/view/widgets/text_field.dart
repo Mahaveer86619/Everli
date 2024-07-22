@@ -8,7 +8,7 @@ class MyFormTextField extends StatefulWidget {
   final TextInputType keyboardType;
   final TextInputAction keyboardAction;
   final String label;
-  final bool obscureText; // Flag to determine if it's a password field
+  final bool obscureText;
   final String? Function(String?) validator;
   final String? initialText;
 

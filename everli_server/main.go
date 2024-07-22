@@ -9,8 +9,6 @@ import (
 	postgres "github.com/Mahaveer86619/Everli/pkg/DB"
 	handlers "github.com/Mahaveer86619/Everli/pkg/Handlers"
 	middleware "github.com/Mahaveer86619/Everli/pkg/Middleware"
-	"github.com/jackc/pgx/v4"
-
 	"github.com/joho/godotenv"
 )
 
@@ -22,14 +20,10 @@ func main() {
 		log.Fatal("Error loading .env file:", err)
 	}
 
-	var db *pgx.Conn
-	for {
-		time.Sleep(2 * time.Second)
+	time.Sleep(2 * time.Second)
 
-		db, err = postgres.ConnectDB()
-		if err == nil {
-			break
-		}
+	db, err := postgres.ConnectDB()
+	if err != nil {
 		fmt.Println("Error connecting to database:", err)
 	}
 
@@ -40,14 +34,13 @@ func main() {
 		log.Fatal("Error creating tables:", err)
 	}
 
-	// Pass the connection to your handlers
 	postgres.SetDBConnection(db)
 
 	fmt.Println(welcomeString)
 	fmt.Println("Successfully connected to the database!")
 	handleFunctions(mux)
 
-	if err := http.ListenAndServe(":8080", mux); err != nil {
+	if err := http.ListenAndServe(":5050", mux); err != nil {
 		fmt.Println("Error running server:", err)
 	}
 }
@@ -65,8 +58,8 @@ var welcomeString = `
 `
 
 func handleFunctions(mux *http.ServeMux) {
-	mux.HandleFunc("/", middleware.LoggingMiddleware(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
+	mux.HandleFunc("GET /", middleware.LoggingMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/favicon.ico" {
 			http.Error(w, "Not Found", http.StatusNotFound)
 			return
 		}
@@ -77,16 +70,18 @@ func handleFunctions(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/users", middleware.LoggingMiddleware(handlers.CreateUserController))
 	mux.HandleFunc("GET /api/v1/all_users", middleware.LoggingMiddleware(handlers.GetAllUsersController))
 	mux.HandleFunc("GET /api/v1/users", middleware.LoggingMiddleware(handlers.GetUserController))
+	mux.HandleFunc("GET /api/v1/users/firebase_uid", middleware.LoggingMiddleware(handlers.GetUserByFirebaseIdController))
 	mux.HandleFunc("PATCH /api/v1/users", middleware.LoggingMiddleware(handlers.UpdateUserController))
 	mux.HandleFunc("DELETE /api/v1/users", middleware.LoggingMiddleware(handlers.DeleteUserController))
 
 	//* Events routes
 	mux.HandleFunc("POST /api/v1/events", middleware.LoggingMiddleware(handlers.CreateEventController))
 	mux.HandleFunc("GET /api/v1/events", middleware.LoggingMiddleware(handlers.GetEventController))
+	mux.HandleFunc("GET /api/v1/all_events", middleware.LoggingMiddleware(handlers.GetAllEventsController))
 	mux.HandleFunc("PATCH /api/v1/events", middleware.LoggingMiddleware(handlers.UpdateEventController))
 	mux.HandleFunc("DELETE /api/v1/events", middleware.LoggingMiddleware(handlers.DeleteEventController))
 
-	//* Assignments routesloggingMiddleware(
+	//* Assignments routes
 	mux.HandleFunc("POST /api/v1/assignments", middleware.LoggingMiddleware(handlers.CreateAssignmentController))
 	mux.HandleFunc("GET /api/v1/assignments", middleware.LoggingMiddleware(handlers.GetAssignmentController))
 	mux.HandleFunc("GET /api/v1/assignments/event", middleware.LoggingMiddleware(handlers.GetAssignmentsByEventIdController))
@@ -110,7 +105,7 @@ func handleFunctions(mux *http.ServeMux) {
 	mux.HandleFunc("PATCH /api/v1/roles", middleware.LoggingMiddleware(handlers.UpdateRoleController))
 	mux.HandleFunc("DELETE /api/v1/roles", middleware.LoggingMiddleware(handlers.DeleteRoleController))
 
-	//* Invitations routes X
+	//* Invitations routes
 	mux.HandleFunc("POST /api/v1/invitations", middleware.LoggingMiddleware(handlers.CreateInvitationController))
 	mux.HandleFunc("GET /api/v1/invitations", middleware.LoggingMiddleware(handlers.GetInvitationController))
 	mux.HandleFunc("PATCH /api/v1/invitations", middleware.LoggingMiddleware(handlers.UpdateInvitationController))

@@ -35,6 +35,8 @@ func CreateAssignment(assignment *Assignment) (*Assignment, int, error) {
 	// Generate a unique ID for the event
 	assignment.Id = uuid.New().String()
 
+	printAssignment(assignment)
+
 	if err := conn.QueryRow(
 		ctx,
 		query,
@@ -46,7 +48,8 @@ func CreateAssignment(assignment *Assignment) (*Assignment, int, error) {
 		assignment.DueDate,
 		assignment.Status,
 		assignment.CreatedAt,
-		assignment.UpdatedAt).Scan(
+		assignment.UpdatedAt,
+	).Scan(
 		&assignment.Id,
 		&assignment.EventId,
 		&assignment.MemberId,
@@ -55,7 +58,8 @@ func CreateAssignment(assignment *Assignment) (*Assignment, int, error) {
 		&assignment.DueDate,
 		&assignment.Status,
 		&assignment.CreatedAt,
-		&assignment.UpdatedAt); err != nil {
+		&assignment.UpdatedAt,
+	); err != nil {
 		log.Panic(err)
 		return nil, http.StatusInternalServerError, fmt.Errorf("error creating assignment: %w", err)
 	}
@@ -233,4 +237,17 @@ func DeleteAssignment(assignment_id string) (int, error) {
 	}
 
 	return http.StatusNoContent, nil
+}
+
+func printAssignment(assignment *Assignment) {
+	fmt.Println("Assignment Details:")
+	fmt.Printf("  - Id:           %s\n", assignment.Id)
+	fmt.Printf("  - EventId:      %s\n", assignment.EventId)
+	fmt.Printf("  - MemberId:     %s\n", assignment.MemberId)
+	fmt.Printf("  - Goal:         %s\n", assignment.Goal)
+	fmt.Printf("  - Description:  %s\n", assignment.Description)
+	fmt.Printf("  - DueDate:      %s\n", assignment.DueDate)
+	fmt.Printf("  - Status:       %s\n", assignment.Status)
+	fmt.Printf("  - CreatedAt:   %s\n", assignment.CreatedAt)
+	fmt.Printf("  - UpdatedAt:   %s\n", assignment.UpdatedAt)
 }

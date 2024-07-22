@@ -6,7 +6,6 @@ import 'package:everli_client/features/auth/repository/auth_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
-import 'package:uuid/uuid.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -87,17 +86,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     try {
       emit(AuthLoading());
-      List<String> skills =
-          event.skills.split(",").map((skill) => skill.trim()).toList();
-      final id = const Uuid().v1();
+      List<String> skillsList = event.skills.split(",");
       final user = AppUser(
-        id: id,
+        id: '',
         firebaseUid: event.id,
         username: event.username,
         email: event.email,
         avatarUrl: defaultAvatarUrl,
         bio: event.bio,
-        skills: skills,
+        skills: skillsList,
+        createdAt: DateTime.now().toIso8601String(),
+        updatedAt: 'nil',
       );
       final res = await _appUserCubit.createUser(user);
       if (res) {

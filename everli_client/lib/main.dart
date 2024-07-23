@@ -35,7 +35,7 @@ Future<void> setup() async {
   final appUserCubit = di.sl<AppUserCubit>();
   await appUserCubit.loadUser();
 
-  //* Test connection
+  // Test connection
   final response = await http.get(
     Uri.parse(
       "${dotenv.get('BASE_URL')}/",

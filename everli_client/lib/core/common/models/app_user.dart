@@ -49,6 +49,18 @@ class AppUser {
     };
   }
 
+  factory AppUser.empty() => AppUser(
+        id: '',
+        firebaseUid: '',
+        username: '',
+        email: '',
+        avatarUrl: '',
+        bio: '',
+        skills: [],
+        createdAt: '',
+        updatedAt: '',
+      );
+
   AppUser copyWith({
     String? id,
     String? firebaseUid,

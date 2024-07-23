@@ -1,12 +1,4 @@
 services:
-  server:
-    build: .
-    container_name: everli_server
-    ports:
-      - 5050:5050
-    depends_on:
-      - db
-    command: go run main.go
   db:
     image: postgres:16.3
     container_name: everli_db
@@ -16,3 +8,10 @@ services:
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - ./db_data:/var/lib/postgresql/data
+  server:
+    build: .
+    container_name: everli_server
+    ports:
+      - 5050:5050
+    depends_on:
+      - db

@@ -19,17 +19,23 @@ class AppUserRepository {
         ),
         body: const JsonEncoder().convert(user.toJson()),
       );
-      if (response.statusCode != 201) {
-        if (response.statusCode == 409) {
-          return DataFailure('Username already exists', response.statusCode);
+
+      final Map<String, dynamic> jsonData = jsonDecode(response.body);
+      final statusCode = response.statusCode;
+
+      if (statusCode != 201) {
+        if (statusCode == 409) {
+          return DataFailure('Username already exists', statusCode);
         }
-        if (response.statusCode == 400) {
-          return DataFailure('Invalid request body', response.statusCode);
+        if (statusCode == 400) {
+          return DataFailure('Invalid request body', statusCode);
         }
-        return DataFailure(response.body, response.statusCode);
+        return DataFailure(jsonData['message'], statusCode);
       }
+
       return DataSuccess(
-        AppUser.fromJson(jsonDecode(response.body)),
+        AppUser.fromJson(jsonData['data']),
+        jsonData['message'],
       );
     } catch (e) {
       _logger.e(e.toString());
@@ -44,14 +50,19 @@ class AppUserRepository {
           '${dotenv.get('BASE_URL')}/api/v1/users/firebase_uid?firebase_uid=$firebaseUid',
         ),
       );
-      if (response.statusCode != 200) {
-        if (response.statusCode == 404) {
-          return DataFailure('User not found', response.statusCode);
+
+      final Map<String, dynamic> jsonData = jsonDecode(response.body);
+      final statusCode = response.statusCode;
+
+      if (statusCode != 200) {
+        if (statusCode == 404) {
+          return DataFailure('User not found', statusCode);
         }
-        return DataFailure(response.body, response.statusCode);
+        return DataFailure(jsonData['message'], statusCode);
       }
       return DataSuccess(
         AppUser.fromJson(jsonDecode(response.body)),
+        jsonData['message'],
       );
     } catch (e) {
       return DataFailure(e.toString(), -1);
@@ -64,16 +75,21 @@ class AppUserRepository {
         Uri.parse(
           '${dotenv.get('BASE_URL')}/api/v1/users',
         ),
-        body: user
+        body: const JsonEncoder().convert(user.toJson()),
       );
-      if (response.statusCode != 200) {
-        if (response.statusCode == 404) {
-          return DataFailure('User not found', response.statusCode);
+
+      final Map<String, dynamic> jsonData = jsonDecode(response.body);
+      final statusCode = response.statusCode;
+
+      if (statusCode != 200) {
+        if (statusCode == 404) {
+          return DataFailure('User not found', statusCode);
         }
-        return DataFailure(response.body, response.statusCode);
+        return DataFailure(jsonData['message'], statusCode);
       }
       return DataSuccess(
         AppUser.fromJson(jsonDecode(response.body)),
+        jsonData['message'],
       );
     } catch (e) {
       return DataFailure(e.toString(), -1);

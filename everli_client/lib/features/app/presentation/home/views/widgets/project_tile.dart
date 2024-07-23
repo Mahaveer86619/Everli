@@ -55,7 +55,7 @@ class EventTile extends StatelessWidget {
                 ),
           ),
           Text(
-            formatDate(event.creationDate),
+            formatDate(event.createdAt),
             style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                   color:
                       Theme.of(context).colorScheme.onSurface.withOpacity(0.5),

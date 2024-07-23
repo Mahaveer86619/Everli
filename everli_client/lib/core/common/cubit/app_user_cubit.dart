@@ -45,7 +45,7 @@ class AppUserCubit extends Cubit<AppUserState> {
       emit(AppUserAuthenticated());
       return true;
     } else {
-      _logger.e('Failed to create user, error: ${res.error}');
+      _logger.e('Failed to create user, error: ${res.message}');
       emit(AppUserInitial());
       return false;
     }
@@ -70,33 +70,17 @@ class AppUserCubit extends Cubit<AppUserState> {
     try {
       await _sharedPreferences.setString(
         prefUserKey,
-        jsonEncode(user.toJson()).toString(),
+        jsonEncode(user.toJson()),
       );
-      _logger.d('(cubit)code reaches here'); // code does not reach here
     } catch (e) {
-      _logger.e('(cubit)error while saving user details: $e');
       rethrow;
     }
   }
 
   Future<AppUser> getUser() async {
     final userJson = _sharedPreferences.getString(prefUserKey);
-    if (userJson != null) {
-      final user = AppUser.fromJson(jsonDecode(userJson));
-      return user;
-    } else { // will never reach here
-      return AppUser(
-        id: '',
-        firebaseUid: '',
-        username: '',
-        email: '',
-        avatarUrl: '',
-        bio: '',
-        skills: [],
-        createdAt: '',
-        updatedAt: ''
-      );
-    }
+    final user = AppUser.fromJson(jsonDecode(userJson!));
+    return user;
   }
 
   Future<AppUser> getUserDetails() async {
@@ -109,30 +93,10 @@ class AppUserCubit extends Cubit<AppUserState> {
         saveUserDetails(res.data!);
         return res.data!;
       } else {
-        return AppUser(
-        id: '',
-        firebaseUid: '',
-        username: '',
-        email: '',
-        avatarUrl: '',
-        bio: '',
-        skills: [],
-        createdAt: '',
-        updatedAt: ''
-      );
+        return AppUser.empty();
       }
     } else {
-      return AppUser(
-        id: '',
-        firebaseUid: '',
-        username: '',
-        email: '',
-        avatarUrl: '',
-        bio: '',
-        skills: [],
-        createdAt: '',
-        updatedAt: ''
-      );
+      return AppUser.empty();
     }
   }
 }

@@ -18,7 +18,7 @@ class AuthRepository {
         return const DataFailure("Authentication failed", -1);
       }
       user = credentials.user;
-      return DataSuccess(user!.uid);
+      return DataSuccess(user!.uid, "signed in with email");
     } catch (e) {
       return DataFailure(e.toString(), -1);
     }
@@ -34,7 +34,7 @@ class AuthRepository {
         return const DataFailure("Authentication failed", -1);
       }
       user = credentials.user;
-      return DataSuccess(user!.uid);
+      return DataSuccess(user!.uid, "signed up with email");
     } catch (e) {
       return DataFailure(e.toString(), -1);
     }
@@ -52,7 +52,7 @@ class AuthRepository {
         return const DataFailure("Authentication failed", -1);
       }
       user = credentials.user;
-      return DataSuccess(user!.uid);
+      return DataSuccess(user!.uid, "signed in with otp");
     } catch (e) {
       return DataFailure(e.toString(), -1);
     }
@@ -67,7 +67,7 @@ class AuthRepository {
         return const DataFailure("Authentication failed", -1);
       }
       user = credentials.user;
-      return DataSuccess(user!.uid);
+      return DataSuccess(user!.uid, "Signed in with google");
     } catch (e) {
       return DataFailure(e.toString(), -1);
     }

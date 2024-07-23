@@ -7,7 +7,6 @@ import 'package:everli_client/features/app/model/event.dart';
 import 'package:everli_client/features/app/presentation/home/bloc/home_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:everli_client/features/app/presentation/home/views/widgets/project_tile.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -304,7 +303,8 @@ List<MyEvent> getEvents() {
       creatorId: "creatorId",
       title: "Mobile app design",
       description: "Design a mobile app for a startup in India",
-      creationDate: DateTime.now().toIso8601String(),
+      createdAt: DateTime.now().toIso8601String(),
+      updatedAt: DateTime.now().toIso8601String(),
       tags: ["High Priority", "In Progress", "Tech", "Design"],
     ),
     MyEvent(
@@ -314,7 +314,8 @@ List<MyEvent> getEvents() {
       description: "Design a mobile app for a startup in India",
       imageUrl:
           "https://www.9series.com/img/services/design/leading%20Mobile%20app%20design%20company%20in%20India.jpeg",
-      creationDate: DateTime.now().toIso8601String(),
+      createdAt: DateTime.now().toIso8601String(),
+      updatedAt: DateTime.now().toIso8601String(),
       tags: ["High Priority", "In Progress"],
     ),
     MyEvent(
@@ -324,7 +325,8 @@ List<MyEvent> getEvents() {
       description: "Design a mobile app for a startup in India",
       imageUrl:
           "https://www.9series.com/img/services/design/leading%20Mobile%20app%20design%20company%20in%20India.jpeg",
-      creationDate: DateTime.now().toIso8601String(),
+      createdAt: DateTime.now().toIso8601String(),
+      updatedAt: DateTime.now().toIso8601String(),
       tags: ["High Priority", "In Progress"],
     ),
     MyEvent(
@@ -334,7 +336,8 @@ List<MyEvent> getEvents() {
       description: "Design a mobile app for a startup in India",
       imageUrl:
           "https://www.9series.com/img/services/design/leading%20Mobile%20app%20design%20company%20in%20India.jpeg",
-      creationDate: DateTime.now().toIso8601String(),
+      createdAt: DateTime.now().toIso8601String(),
+      updatedAt: DateTime.now().toIso8601String(),
       tags: ["High Priority", "In Progress"],
     ),
   ];

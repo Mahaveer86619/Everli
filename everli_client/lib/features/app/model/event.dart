@@ -7,7 +7,8 @@ class MyEvent {
   final String description;
   final String? imageUrl;
   final List<String> tags;
-  final String creationDate;
+  final String createdAt;
+  final String updatedAt;
 
   MyEvent({
     required this.id,
@@ -16,18 +17,20 @@ class MyEvent {
     required this.description,
     this.imageUrl,
     required this.tags,
-    required this.creationDate,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
   factory MyEvent.fromJson(Map<String, dynamic> json) {
     return MyEvent(
       id: json['id'],
       creatorId: json['creator_id'],
-      title: json['title'],
+      title: json['name'],
       description: json['description'],
-      imageUrl: json['image_url'],
+      imageUrl: json['cover_image_url'],
       tags: (json['tags'] as List).cast<String>(),
-      creationDate: json['creation_date'],
+      createdAt: json['created_at'],
+      updatedAt: json['updated_at'],
     );
   }
 
@@ -35,11 +38,12 @@ class MyEvent {
     return {
       'id': id,
       'creator_id': creatorId,
-      'title': title,
+      'name': title,
       'description': description,
-      'image_url': imageUrl ?? defaultEventImageUrl,
+      'cover_image_url': imageUrl ?? defaultEventImageUrl,
       'tags': tags.map((tag) => tag).toList(),
-      'creation_date': creationDate,
+      'created_at': createdAt,
+      'updated_at': updatedAt,
     };
   }
 
@@ -50,7 +54,8 @@ class MyEvent {
     String? description,
     String? imageUrl,
     List<String>? tags,
-    String? creationDate,
+    String? createdAt,
+    String? updatedAt,
   }) {
     return MyEvent(
       id: id ?? this.id,
@@ -59,11 +64,12 @@ class MyEvent {
       description: description ?? this.description,
       imageUrl: imageUrl ?? this.imageUrl,
       tags: tags ?? this.tags,
-      creationDate: creationDate ?? this.creationDate,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
-    @override
+  @override
   String toString() {
     return '''
 
@@ -74,7 +80,8 @@ class MyEvent {
         description: $description,
         imageUrl: $imageUrl,
         tags: $tags,
-        creationDate: $creationDate,
+        createdAt: $createdAt,
+        updatedAt: $updatedAt,
       }
 
 ''';

@@ -83,7 +83,7 @@ class AppUserCubit extends Cubit<AppUserState> {
     return user;
   }
 
-  Future<AppUser> getUserDetails() async {
+  Future<AppUser> refreshUserDetails() async {
     final userJson = _sharedPreferences.getString(prefUserKey);
     if (userJson != null) {
       final user = AppUser.fromJson(jsonDecode(userJson));

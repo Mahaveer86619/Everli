@@ -39,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    context.read<HomeBloc>().add(FetchAppUser());
+    context.read<HomeBloc>().add(FetchAll());
   }
 
   @override
@@ -59,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
             return ErrorScreen(error: state.error);
           }
           if (state is HomeLoaded) {
-            return _buildBody(state.user);
+            return _buildBody(state);
           }
           return Container();
         },
@@ -67,18 +67,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  _buildBody(AppUser user) {
+  _buildBody(HomeLoaded state) {
     return Scaffold(
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
           child: Column(
             children: [
-              _buildHeader(user),
+              _buildHeader(state.user),
               const SizedBox(height: 32),
-              _buildProjectSection(),
+              _buildProjectSection(state.events),
               const SizedBox(height: 32),
-              _buildTodaysTasks(),
+              _buildTodaysTasks(state.assignments),
             ],
           ),
         ),
@@ -128,13 +129,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        IconButton(
-          icon: Icon(
-            Icons.search,
-            color: Theme.of(context).colorScheme.onBackground,
-          ),
-          onPressed: () {},
-        ),
         _moreIcon(),
       ],
     );
@@ -232,8 +226,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  _buildProjectSection() {
-    final List<MyEvent> events = getEvents();
+  _buildProjectSection(List<MyEvent> events) {
+    // final List<MyEvent> events = getEvents();
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,8 +270,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  _buildTodaysTasks() {
-    final List<MyAssignments> assignments = getAssignments();
+  _buildTodaysTasks(List<MyAssignment> assignments) {
+    // final List<MyAssignment> assignments = getAssignments();
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -343,9 +337,9 @@ List<MyEvent> getEvents() {
   ];
 }
 
-List<MyAssignments> getAssignments() {
+List<MyAssignment> getAssignments() {
   return [
-    MyAssignments(
+    MyAssignment(
       id: 'id',
       eventId: 'eventId',
       memberId: 'memberId',
@@ -354,7 +348,7 @@ List<MyAssignments> getAssignments() {
       dueDate: DateTime.now(),
       isCompleted: false,
     ),
-    MyAssignments(
+    MyAssignment(
       id: 'id',
       eventId: 'eventId',
       memberId: 'memberId',
@@ -363,7 +357,7 @@ List<MyAssignments> getAssignments() {
       dueDate: DateTime.now(),
       isCompleted: false,
     ),
-    MyAssignments(
+    MyAssignment(
       id: 'id',
       eventId: 'eventId',
       memberId: 'memberId',
@@ -372,7 +366,7 @@ List<MyAssignments> getAssignments() {
       dueDate: DateTime.now(),
       isCompleted: false,
     ),
-    MyAssignments(
+    MyAssignment(
       id: 'id',
       eventId: 'eventId',
       memberId: 'memberId',

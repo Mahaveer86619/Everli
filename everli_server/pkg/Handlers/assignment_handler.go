@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	pkg "github.com/Mahaveer86619/Everli/pkg"
@@ -99,6 +101,15 @@ func GetAssignmentsByEventIdController(w http.ResponseWriter, r *http.Request) {
 
 	assignments, statusCode, err := pkg.GetAssignmentsByEventId(event_id)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			fmt.Print("No assignments found 1")
+			successResponse := &resp.Success{}
+			successResponse.SetStatusCode(http.StatusOK)
+			successResponse.SetData([]pkg.Assignment{})
+			successResponse.SetMessage("Assignments fetched successfully")
+			successResponse.JSON(w)
+		}
+		fmt.Print("No assignments found 2")
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
 		failureResponse.SetMessage(err.Error())

@@ -15,7 +15,12 @@ func LoggingMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		ipAddress := remoteAddr[:strings.LastIndex(remoteAddr, ":")]
 
 		// Log the request with IP address
-		log.Printf("Request received from IP address: %s ~ Method: %s & Path: %s ~ User-Agent: %s", ipAddress, r.Method, r.URL.Path, r.UserAgent())
+		logString := `
+		Request received from IP address: %s
+		Method: %s & Path: %s
+		User-Agent: %s
+		`
+		log.Printf(logString, ipAddress, r.Method, r.URL.Path, r.UserAgent())
 
 		// Call the next handler in the chain
 		next(w, r)

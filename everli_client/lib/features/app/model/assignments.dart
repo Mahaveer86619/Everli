@@ -1,4 +1,4 @@
-class MyAssignments {
+class MyAssignment {
   final String id;
   final String eventId;
   final String? memberId;
@@ -7,7 +7,7 @@ class MyAssignments {
   final DateTime dueDate;
   final bool isCompleted;
 
-  MyAssignments({
+  MyAssignment({
     required this.id,
     required this.eventId,
     this.memberId = '',
@@ -17,8 +17,8 @@ class MyAssignments {
     required this.isCompleted,
   });
 
-  factory MyAssignments.fromJson(Map<String, dynamic> json) {
-    return MyAssignments(
+  factory MyAssignment.fromJson(Map<String, dynamic> json) {
+    return MyAssignment(
       id: json['id'],
       eventId: json['event_id'],
       memberId: json['member_id'],
@@ -41,7 +41,7 @@ class MyAssignments {
     };
   }
 
-  MyAssignments copyWith({
+  MyAssignment copyWith({
     String? id,
     String? eventId,
     String? memberId,
@@ -50,7 +50,7 @@ class MyAssignments {
     DateTime? dueDate,
     bool? isCompleted,
   }) {
-    return MyAssignments(
+    return MyAssignment(
       id: id ?? this.id,
       eventId: eventId ?? this.eventId,
       memberId: memberId ?? this.memberId,

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
@@ -68,7 +67,6 @@ func CreateEvent(event *Event) (*Event, int, error) {
 		&pg_event.CreatedAt,
 		&pg_event.UpdatedAt)
 	if err != nil {
-		log.Panic(err)
 		return nil, http.StatusInternalServerError, fmt.Errorf("error creating event: %w", err)
 	}
 
@@ -141,6 +139,9 @@ func GetAllEvents() ([]Event, int, error) {
 			&pg_return.UpdatedAt,
 		)
 		if err != nil {
+			if err == sql.ErrNoRows {
+				return []Event{}, http.StatusOK, nil
+			}
 			return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
 		}
 		event = pgEventToEvent(pg_return)

@@ -19,6 +19,7 @@ type Assignment struct {
 	Description string `json:"description"`
 	DueDate     string `json:"due_date"`
 	Status      string `json:"status"`
+	IsCompleted bool   `json:"is_completed"`
 	CreatedAt   string `json:"created_at"`
 	UpdatedAt   string `json:"updated_at"`
 }
@@ -28,14 +29,12 @@ func CreateAssignment(assignment *Assignment) (*Assignment, int, error) {
 	ctx := context.Background()
 
 	query := `
-		INSERT INTO assignments (id, event_id, member_id, goal, description, due_date, status, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *
+		INSERT INTO assignments (id, event_id, member_id, goal, description, due_date, status, is_completed, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *
 	`
 
 	// Generate a unique ID for the event
 	assignment.Id = uuid.New().String()
-
-	printAssignment(assignment)
 
 	if err := conn.QueryRow(
 		ctx,
@@ -47,6 +46,7 @@ func CreateAssignment(assignment *Assignment) (*Assignment, int, error) {
 		assignment.Description,
 		assignment.DueDate,
 		assignment.Status,
+		assignment.IsCompleted,
 		assignment.CreatedAt,
 		assignment.UpdatedAt,
 	).Scan(
@@ -57,6 +57,7 @@ func CreateAssignment(assignment *Assignment) (*Assignment, int, error) {
 		&assignment.Description,
 		&assignment.DueDate,
 		&assignment.Status,
+		&assignment.IsCompleted,
 		&assignment.CreatedAt,
 		&assignment.UpdatedAt,
 	); err != nil {
@@ -89,6 +90,7 @@ func GetAssignment(assignment_id string) (*Assignment, int, error) {
 		&assignment.Description,
 		&assignment.DueDate,
 		&assignment.Status,
+		&assignment.IsCompleted,
 		&assignment.CreatedAt,
 		&assignment.UpdatedAt,
 	); err != nil {
@@ -128,9 +130,13 @@ func GetAssignmentsByEventId(event_id string) ([]Assignment, int, error) {
 			&assignment.Description,
 			&assignment.DueDate,
 			&assignment.Status,
+			&assignment.IsCompleted,
 			&assignment.CreatedAt,
 			&assignment.UpdatedAt,
 		); err != nil {
+			if err == sql.ErrNoRows {
+				return []Assignment{}, http.StatusOK, nil
+			}
 			return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
 		}
 
@@ -167,10 +173,11 @@ func GetAssignmentsByMemberId(member_id string) ([]Assignment, int, error) {
 			&assignment.Description,
 			&assignment.DueDate,
 			&assignment.Status,
+			&assignment.IsCompleted,
 			&assignment.CreatedAt,
 			&assignment.UpdatedAt,
 		); err != nil {
-			return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+			return nil, http.StatusInternalServerError, sql.ErrNoRows
 		}
 
 		assignments = append(assignments, assignment)
@@ -197,9 +204,11 @@ func UpdateAssignment(assignment *Assignment) (*Assignment, int, error) {
 		assignment.Description,
 		assignment.DueDate,
 		assignment.Status,
+		assignment.IsCompleted,
 		assignment.CreatedAt,
 		assignment.UpdatedAt,
-		assignment.Id).Scan(
+		assignment.Id,
+		).Scan(
 		&assignment.Id,
 		&assignment.EventId,
 		&assignment.MemberId,
@@ -207,6 +216,7 @@ func UpdateAssignment(assignment *Assignment) (*Assignment, int, error) {
 		&assignment.Description,
 		&assignment.DueDate,
 		&assignment.Status,
+		&assignment.IsCompleted,
 		&assignment.CreatedAt,
 		&assignment.UpdatedAt,
 	); err != nil {
@@ -239,15 +249,16 @@ func DeleteAssignment(assignment_id string) (int, error) {
 	return http.StatusNoContent, nil
 }
 
-func printAssignment(assignment *Assignment) {
-	fmt.Println("Assignment Details:")
-	fmt.Printf("  - Id:           %s\n", assignment.Id)
-	fmt.Printf("  - EventId:      %s\n", assignment.EventId)
-	fmt.Printf("  - MemberId:     %s\n", assignment.MemberId)
-	fmt.Printf("  - Goal:         %s\n", assignment.Goal)
-	fmt.Printf("  - Description:  %s\n", assignment.Description)
-	fmt.Printf("  - DueDate:      %s\n", assignment.DueDate)
-	fmt.Printf("  - Status:       %s\n", assignment.Status)
-	fmt.Printf("  - CreatedAt:   %s\n", assignment.CreatedAt)
-	fmt.Printf("  - UpdatedAt:   %s\n", assignment.UpdatedAt)
-}
+// func printAssignment(assignment *Assignment) {
+// 	fmt.Println("Assignment Details:")
+// 	fmt.Printf("  - Id:           %s\n", assignment.Id)
+// 	fmt.Printf("  - EventId:      %s\n", assignment.EventId)
+// 	fmt.Printf("  - MemberId:     %s\n", assignment.MemberId)
+// 	fmt.Printf("  - Goal:         %s\n", assignment.Goal)
+// 	fmt.Printf("  - Description:  %s\n", assignment.Description)
+// 	fmt.Printf("  - DueDate:      %s\n", assignment.DueDate)
+// 	fmt.Printf("  - Status:       %s\n", assignment.Status)
+// 	fmt.Printf("  - IsCompleted:  %t\n", assignment.IsCompleted)
+// 	fmt.Printf("  - CreatedAt:   %s\n", assignment.CreatedAt)
+// 	fmt.Printf("  - UpdatedAt:   %s\n", assignment.UpdatedAt)
+// }

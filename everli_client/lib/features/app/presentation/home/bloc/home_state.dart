@@ -8,8 +8,40 @@ final class HomeLoading extends HomeState {}
 
 final class HomeLoaded extends HomeState {
   final AppUser user;
+  final List<MyEvent> events;
+  final List<MyAssignment> assignments;
+  final List<MyCheckpoint> checkpoints;
 
-  HomeLoaded({required this.user});
+  HomeLoaded({
+    required this.user,
+    required this.events,
+    required this.assignments,
+    required this.checkpoints,
+  });
+}
+
+final class HomeUserLoaded extends HomeState {
+  final AppUser user;
+
+  HomeUserLoaded({required this.user});
+}
+
+final class HomeEventLoaded extends HomeState {
+  final List<MyEvent> events;
+
+  HomeEventLoaded({required this.events});
+}
+
+final class HomeAssignmentsLoaded extends HomeState {
+  final List<MyAssignment> assignments;
+
+  HomeAssignmentsLoaded({required this.assignments});
+}
+
+final class HomeCheckpointsLoaded extends HomeState {
+  final List<MyCheckpoint> checkpoints;
+
+  HomeCheckpointsLoaded({required this.checkpoints});
 }
 
 final class HomeError extends HomeState {

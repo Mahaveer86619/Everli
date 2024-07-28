@@ -61,7 +61,8 @@ func Createuser(user *MyUser) (*MyUser, int, error) {
 		user.Bio,
 		skillsStr,
 		user.Created_at,
-		user.Updated_at).Scan(
+		user.Updated_at,
+	).Scan(
 		&pg_user.Id,
 		&pg_user.Firebase_uid,
 		&pg_user.Username,
@@ -71,6 +72,7 @@ func Createuser(user *MyUser) (*MyUser, int, error) {
 		&pg_user.Skills,
 		&pg_user.Created_at,
 		&pg_user.Updated_at)
+
 	if err != nil {
 		log.Panic(err)
 		return nil, http.StatusInternalServerError, fmt.Errorf("error creating user: %w", err)
@@ -116,6 +118,9 @@ func GetAllUsers() ([]MyUser, int, error) {
 			&pg_return.Created_at,
 			&pg_return.Updated_at)
 		if err != nil {
+			if err == sql.ErrNoRows {
+				return []MyUser{}, http.StatusOK, nil
+			}
 			return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
 		}
 		user, err = pgUserToUser(pg_return)
@@ -206,8 +211,6 @@ func GetUserByFirebaseID(firebase_id string) (*MyUser, int, error) {
 
 	return user, http.StatusOK, nil
 }
-
-
 
 func UpdateUser(user *MyUser) (*MyUser, int, error) {
 	conn := db.GetDBConnection()

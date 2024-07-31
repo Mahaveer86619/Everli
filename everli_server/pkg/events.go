@@ -1,9 +1,9 @@
 package pkg
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -35,7 +35,6 @@ type event_pg struct {
 
 func CreateEvent(event *Event) (*Event, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 		INSERT INTO events (id, creator_id, name, description, tags, cover_image_url, created_at, updated_at)
@@ -48,7 +47,6 @@ func CreateEvent(event *Event) (*Event, int, error) {
 
 	var pg_event event_pg
 	err := conn.QueryRow(
-		ctx,
 		query,
 		event.Id,
 		event.CreatorId,
@@ -77,14 +75,12 @@ func CreateEvent(event *Event) (*Event, int, error) {
 
 func GetEvent(event_id string) (*Event, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 	  SELECT * FROM events WHERE id = $1
 	`
 	var pg_event event_pg
 	if err := conn.QueryRow(
-		ctx,
 		query,
 		event_id,
 	).Scan(
@@ -110,14 +106,13 @@ func GetEvent(event_id string) (*Event, int, error) {
 
 func GetAllEvents() ([]Event, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 	  SELECT *
 	  FROM events
 	`
 
-	rows, err := conn.Query(ctx, query)
+	rows, err := conn.Query(query)
 	if err != nil {
 		fmt.Print("error getting events: %w", err)
 	}
@@ -147,12 +142,15 @@ func GetAllEvents() ([]Event, int, error) {
 		event = pgEventToEvent(pg_return)
 		events = append(events, *event)
 	}
+	if err := rows.Err(); err != nil {
+		log.Panic(err)
+	}
+
 	return events, http.StatusOK, nil
 }
 
 func UpdateEvent(event *Event) (*Event, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `UPDATE events 
 	SET creator_id = $1, name = $2, description = $3, tags = $4, cover_image_url = $5, created_at = $6, updated_at = $7
@@ -163,7 +161,6 @@ func UpdateEvent(event *Event) (*Event, int, error) {
 	var pg_event event_pg
 
 	if err := conn.QueryRow(
-		ctx,
 		query,
 		event.CreatorId,
 		event.Name,
@@ -172,7 +169,8 @@ func UpdateEvent(event *Event) (*Event, int, error) {
 		event.CoverImageUrl,
 		event.CreatedAt,
 		event.UpdatedAt,
-		event.Id).Scan(
+		event.Id,
+	).Scan(
 		&pg_event.Id,
 		&pg_event.CreatorId,
 		&pg_event.Name,
@@ -180,7 +178,8 @@ func UpdateEvent(event *Event) (*Event, int, error) {
 		&pg_event.Tags,
 		&pg_event.CoverImageUrl,
 		&pg_event.CreatedAt,
-		&pg_event.UpdatedAt); err != nil {
+		&pg_event.UpdatedAt,
+	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, http.StatusNotFound, fmt.Errorf("event not found with id: %s", event.Id)
 		}
@@ -194,19 +193,33 @@ func UpdateEvent(event *Event) (*Event, int, error) {
 
 func DeleteEvent(event_id string) (int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
-	query := "DELETE FROM events WHERE id = $1"
+	query := `SELECT * FROM events WHERE id = $1`
+	del_query := "DELETE FROM events WHERE id = $1"
 
-	result, err := conn.Exec(ctx, query, event_id)
-	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
-	}
-
-	rowsAffected := result.RowsAffected()
-
-	if rowsAffected == 0 {
-		return http.StatusNotFound, fmt.Errorf("event not found with id: %s", event_id)
+	var pg_event event_pg
+	if err := conn.QueryRow(
+		query,
+		event_id,
+	).Scan(
+		&pg_event.Id,
+		&pg_event.CreatorId,
+		&pg_event.Name,
+		&pg_event.Description,
+		&pg_event.Tags,
+		&pg_event.CoverImageUrl,
+		&pg_event.CreatedAt,
+		&pg_event.UpdatedAt,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return http.StatusNotFound, fmt.Errorf("event not found with id: %s", event_id)
+		}
+		return http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+	} else {
+		_, err = conn.Exec(del_query, event_id)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
+		}
 	}
 
 	return http.StatusNoContent, nil

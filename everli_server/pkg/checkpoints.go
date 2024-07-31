@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -25,7 +24,6 @@ type Checkpoint struct {
 
 func CreateCheckpoint(checkpoint *Checkpoint) (*Checkpoint, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 		INSERT INTO checkpoints (id, assignment_id, member_id, goal, description, due_date, status, created_at, updated_at)
@@ -35,7 +33,6 @@ func CreateCheckpoint(checkpoint *Checkpoint) (*Checkpoint, int, error) {
 	checkpoint.Id = uuid.New().String()
 
 	if err := conn.QueryRow(
-		ctx,
 		query,
 		checkpoint.Id,
 		checkpoint.AssignmentId,
@@ -45,7 +42,8 @@ func CreateCheckpoint(checkpoint *Checkpoint) (*Checkpoint, int, error) {
 		checkpoint.DueDate,
 		checkpoint.Status,
 		checkpoint.CreatedAt,
-		checkpoint.UpdatedAt).Scan(
+		checkpoint.UpdatedAt,
+	).Scan(
 		&checkpoint.Id,
 		&checkpoint.AssignmentId,
 		&checkpoint.MemberId,
@@ -54,7 +52,8 @@ func CreateCheckpoint(checkpoint *Checkpoint) (*Checkpoint, int, error) {
 		&checkpoint.DueDate,
 		&checkpoint.Status,
 		&checkpoint.CreatedAt,
-		&checkpoint.UpdatedAt); err != nil {
+		&checkpoint.UpdatedAt,
+	); err != nil {
 		log.Panic(err)
 		return nil, http.StatusInternalServerError, fmt.Errorf("error creating checkpoint: %w", err)
 	}
@@ -64,7 +63,6 @@ func CreateCheckpoint(checkpoint *Checkpoint) (*Checkpoint, int, error) {
 
 func GetCheckpoint(checkpoint_id string) (*Checkpoint, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 	  SELECT *
@@ -73,7 +71,6 @@ func GetCheckpoint(checkpoint_id string) (*Checkpoint, int, error) {
 	`
 	var checkpoint Checkpoint
 	if err := conn.QueryRow(
-		ctx,
 		query,
 		checkpoint_id,
 	).Scan(
@@ -98,7 +95,6 @@ func GetCheckpoint(checkpoint_id string) (*Checkpoint, int, error) {
 
 func GetCheckpointsByMemberId(member_id string) ([]Checkpoint, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 	  SELECT *
@@ -106,7 +102,7 @@ func GetCheckpointsByMemberId(member_id string) ([]Checkpoint, int, error) {
 	  WHERE member_id = $1
 	`
 
-	rows, err := conn.Query(ctx, query, member_id)
+	rows, err := conn.Query(query, member_id)
 	if err != nil {
 		fmt.Print("error getting checkpoints: %w", err)
 	}
@@ -128,16 +124,16 @@ func GetCheckpointsByMemberId(member_id string) ([]Checkpoint, int, error) {
 		); err != nil {
 			return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
 		}
-
 		checkpoints = append(checkpoints, checkpoint)
 	}
-
+	if err := rows.Err(); err != nil {
+		log.Panic(err)
+	}
 	return checkpoints, http.StatusOK, nil
 }
 
 func GetCheckpointsByAssignmentId(assignment_id string) ([]Checkpoint, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 	  SELECT *
@@ -145,7 +141,7 @@ func GetCheckpointsByAssignmentId(assignment_id string) ([]Checkpoint, int, erro
 	  WHERE assignment_id = $1
 	`
 
-	rows, err := conn.Query(ctx, query, assignment_id)
+	rows, err := conn.Query(query, assignment_id)
 	if err != nil {
 		fmt.Print("error getting checkpoints: %w", err)
 	}
@@ -170,13 +166,15 @@ func GetCheckpointsByAssignmentId(assignment_id string) ([]Checkpoint, int, erro
 
 		checkpoints = append(checkpoints, checkpoint)
 	}
+	if err := rows.Err(); err != nil {
+		log.Panic(err)
+	}
 
 	return checkpoints, http.StatusOK, nil
 }
 
 func UpdateCheckpoint(checkpoint *Checkpoint) (*Checkpoint, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `UPDATE checkpoints 
 	SET assignment_id = $1, member_id = $2, goal = $3, description = $4, due_date = $5, status = $6, created_at = $7, updated_at = $8
@@ -184,7 +182,6 @@ func UpdateCheckpoint(checkpoint *Checkpoint) (*Checkpoint, int, error) {
 	`
 
 	if err := conn.QueryRow(
-		ctx,
 		query,
 		checkpoint.AssignmentId,
 		checkpoint.MemberId,
@@ -194,7 +191,8 @@ func UpdateCheckpoint(checkpoint *Checkpoint) (*Checkpoint, int, error) {
 		checkpoint.Status,
 		checkpoint.CreatedAt,
 		checkpoint.UpdatedAt,
-		checkpoint.Id).Scan(
+		checkpoint.Id,
+	).Scan(
 		&checkpoint.Id,
 		&checkpoint.AssignmentId,
 		&checkpoint.MemberId,
@@ -216,19 +214,34 @@ func UpdateCheckpoint(checkpoint *Checkpoint) (*Checkpoint, int, error) {
 
 func DeleteCheckpoint(checkpoint_id string) (int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
-	query := "DELETE FROM checkpoints WHERE id = $1"
+	query := "SELECT * FROM checkpoints WHERE id = $1"
+	del_query := "DELETE FROM checkpoints WHERE id = $1"
 
-	result, err := conn.Exec(ctx, query, checkpoint_id)
-	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
-	}
-
-	rowsAffected := result.RowsAffected()
-
-	if rowsAffected == 0 {
-		return http.StatusNotFound, fmt.Errorf("checkpoint not found with id: %s", checkpoint_id)
+	var checkpoint Checkpoint
+	if err := conn.QueryRow(
+		query,
+		checkpoint_id,
+	).Scan(
+		&checkpoint.Id,
+		&checkpoint.AssignmentId,
+		&checkpoint.MemberId,
+		&checkpoint.Goal,
+		&checkpoint.Description,
+		&checkpoint.DueDate,
+		&checkpoint.Status,
+		&checkpoint.CreatedAt,
+		&checkpoint.UpdatedAt,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return http.StatusNotFound, fmt.Errorf("checkpoint not found with id: %s", checkpoint_id)
+		}
+		return http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+	} else {
+		_, err = conn.Exec(del_query, checkpoint_id)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
+		}
 	}
 
 	return http.StatusNoContent, nil

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	postgres "github.com/Mahaveer86619/Everli/pkg/DB"
 	handlers "github.com/Mahaveer86619/Everli/pkg/Handlers"
@@ -19,8 +18,6 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file:", err)
 	}
-
-	time.Sleep(2 * time.Second)
 
 	db, err := postgres.ConnectDB()
 	if err != nil {

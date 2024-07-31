@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -22,7 +21,6 @@ type Role struct {
 
 func CreateRole(role *Role) (*Role, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 		INSERT INTO roles (id, event_id, member_id, role, created_at, updated_at)
@@ -33,14 +31,14 @@ func CreateRole(role *Role) (*Role, int, error) {
 	role.Id = uuid.New().String()
 
 	if err := conn.QueryRow(
-		ctx,
 		query,
 		role.Id,
 		role.EventId,
 		role.MemberId,
 		role.Role,
 		role.CreatedAt,
-		role.UpdatedAt).Scan(
+		role.UpdatedAt,
+	).Scan(
 		&role.Id,
 		&role.EventId,
 		&role.MemberId,
@@ -57,7 +55,6 @@ func CreateRole(role *Role) (*Role, int, error) {
 
 func GetRoleById(role_id string) (*Role, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 	  SELECT *
@@ -66,7 +63,6 @@ func GetRoleById(role_id string) (*Role, int, error) {
 	`
 	var role Role
 	if err := conn.QueryRow(
-		ctx,
 		query,
 		role_id,
 	).Scan(
@@ -88,7 +84,6 @@ func GetRoleById(role_id string) (*Role, int, error) {
 
 func GetRolesByEventId(event_id string) ([]Role, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 	  SELECT *
@@ -96,7 +91,7 @@ func GetRolesByEventId(event_id string) ([]Role, int, error) {
 	  WHERE event_id = $1
 	`
 
-	rows, err := conn.Query(ctx, query, event_id)
+	rows, err := conn.Query(query, event_id)
 	if err != nil {
 		fmt.Print("error getting members: %w", err)
 	}
@@ -124,7 +119,6 @@ func GetRolesByEventId(event_id string) ([]Role, int, error) {
 
 func GetRolesByMemberId(member_id string) ([]Role, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 	  SELECT *
@@ -132,7 +126,7 @@ func GetRolesByMemberId(member_id string) ([]Role, int, error) {
 	  WHERE member_id = $1
 	`
 
-	rows, err := conn.Query(ctx, query, member_id)
+	rows, err := conn.Query(query, member_id)
 	if err != nil {
 		fmt.Print("error getting members: %w", err)
 	}
@@ -161,7 +155,6 @@ func GetRolesByMemberId(member_id string) ([]Role, int, error) {
 
 func UpdateRole(role *Role) (*Role, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `UPDATE invitations 
 	SET event_id = $1, member_id = $2, role = $3, created_at = $4, updated_at = $5
@@ -169,7 +162,6 @@ func UpdateRole(role *Role) (*Role, int, error) {
 	`
 
 	if err := conn.QueryRow(
-		ctx,
 		query,
 		role.EventId,
 		role.MemberId,
@@ -196,19 +188,31 @@ func UpdateRole(role *Role) (*Role, int, error) {
 
 func DeleteRole(role_id string) (int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
-	query := "DELETE FROM roles WHERE id = $1"
-
-	result, err := conn.Exec(ctx, query, role_id)
-	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
-	}
-
-	rowsAffected := result.RowsAffected()
-
-	if rowsAffected == 0 {
-		return http.StatusNotFound, fmt.Errorf("role not found with id: %s", role_id)
+	query := `SELECT * FROM roles WHERE id = $1`
+	del_query := "DELETE FROM roles WHERE id = $1"
+	
+	var role Role
+	if err := conn.QueryRow(
+		query,
+		role_id,
+	).Scan(
+		&role.Id,
+		&role.EventId,
+		&role.MemberId,
+		&role.Role,
+		&role.CreatedAt,
+		&role.UpdatedAt,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return http.StatusNotFound, fmt.Errorf("role not found with id: %s", role_id)
+		}
+		return http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+	} else {
+		_, err = conn.Exec(del_query, role_id)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
+		}
 	}
 
 	return http.StatusNoContent, nil

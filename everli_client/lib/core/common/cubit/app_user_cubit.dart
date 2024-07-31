@@ -30,7 +30,9 @@ class AppUserCubit extends Cubit<AppUserState> {
 
   Future<void> authenticateUser(String firebaseUid) async {
     final resp = await _appUserRepository.getUser(firebaseUid);
+    print(resp);
     if (resp is DataSuccess) {
+      print(resp.data);
       saveUserDetails(resp.data!);
       emit(AppUserAuthenticated());
     } else {
@@ -72,7 +74,9 @@ class AppUserCubit extends Cubit<AppUserState> {
         prefUserKey,
         jsonEncode(user.toJson()),
       );
+      _logger.i('User saved');
     } catch (e) {
+      _logger.e(e.toString());
       rethrow;
     }
   }
@@ -96,6 +100,7 @@ class AppUserCubit extends Cubit<AppUserState> {
         return AppUser.empty();
       }
     } else {
+      _logger.e('User not found');
       return AppUser.empty();
     }
   }

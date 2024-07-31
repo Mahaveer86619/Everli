@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -22,7 +21,6 @@ type Invitation struct {
 
 func CreateInvitation(invitation *Invitation) (*Invitation, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 		INSERT INTO invitations (id, event_id, code, role, expiry, created_at, updated_at)
@@ -33,7 +31,6 @@ func CreateInvitation(invitation *Invitation) (*Invitation, int, error) {
 	invitation.Id = uuid.New().String()
 
 	if err := conn.QueryRow(
-		ctx,
 		query,
 		invitation.Id,
 		invitation.EventId,
@@ -58,7 +55,6 @@ func CreateInvitation(invitation *Invitation) (*Invitation, int, error) {
 
 func GetInvitation(code string) (*Invitation, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 	  SELECT *
@@ -67,7 +63,6 @@ func GetInvitation(code string) (*Invitation, int, error) {
 	`
 	var invitation Invitation
 	if err := conn.QueryRow(
-		ctx,
 		query,
 		code,
 	).Scan(
@@ -89,7 +84,6 @@ func GetInvitation(code string) (*Invitation, int, error) {
 
 func UpdateInvitation(invitation *Invitation) (*Invitation, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `UPDATE invitations 
 	SET event_id = $1, code = $2, role = $3, expiry = $4, created_at = $5, updated_at = $6
@@ -97,14 +91,14 @@ func UpdateInvitation(invitation *Invitation) (*Invitation, int, error) {
 	`
 
 	if err := conn.QueryRow(
-		ctx,
 		query,
 		invitation.EventId,
 		invitation.Code,
 		invitation.Role,
 		invitation.ExpiryDate,
 		invitation.CreatedAt,
-		invitation.Id).Scan(
+		invitation.Id,
+	).Scan(
 		&invitation.Id,
 		&invitation.EventId,
 		&invitation.Code,
@@ -123,19 +117,31 @@ func UpdateInvitation(invitation *Invitation) (*Invitation, int, error) {
 
 func DeleteInvitation(invitation_id string) (int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
-	query := "DELETE FROM invitations WHERE id = $1"
+	query := `SELECT * FROM profiles WHERE id = $1`
+	del_query := "DELETE FROM profiles WHERE id = $1"
 
-	result, err := conn.Exec(ctx, query, invitation_id)
-	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
-	}
-
-	rowsAffected := result.RowsAffected()
-
-	if rowsAffected == 0 {
-		return http.StatusNotFound, fmt.Errorf("invitation not found with id: %s", invitation_id)
+	var invitation Invitation
+	if err := conn.QueryRow(
+		query,
+		invitation_id,
+	).Scan(
+		&invitation.Id,
+		&invitation.EventId,
+		&invitation.Code,
+		&invitation.Role,
+		&invitation.ExpiryDate,
+		&invitation.CreatedAt,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return http.StatusNotFound, fmt.Errorf("invitation not found with id: %s", invitation_id)
+		}
+		return http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+	} else {
+		_, err = conn.Exec(del_query, invitation_id)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
+		}
 	}
 
 	return http.StatusNoContent, nil

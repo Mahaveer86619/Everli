@@ -67,14 +67,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         event.email,
         event.password,
       );
+      
       if (res is DataSuccess) {
-        _appUserCubit.authenticateUser(res.data!).then((value) {
+        await _appUserCubit.authenticateUser(res.data!).then((value) {
           emit(SignedIn());
         });
       } else {
-        emit(AuthError('Sign up failed'));
+        emit(AuthError('Sign in failed'));
       }
     } catch (e) {
+      emit(AuthError('Sign in failed'));
       _logger.e(e.toString());
       rethrow;
     }

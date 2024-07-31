@@ -1,10 +1,15 @@
 import 'package:everli_client/core/resources/data_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:logger/logger.dart';
 
 class AuthRepository {
   final FirebaseAuth firebaseAuth;
+  final Logger logger;
 
-  AuthRepository({required this.firebaseAuth});
+  AuthRepository({
+    required this.firebaseAuth,
+    required this.logger,
+  });
 
   User? user;
 

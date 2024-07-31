@@ -51,17 +51,27 @@ class AppUserRepository {
         ),
       );
 
-      final Map<String, dynamic> jsonData = jsonDecode(response.body);
-      final statusCode = response.statusCode;
+      final jsonData = jsonDecode(response.body);
+      print("jsonData:");
+      _logger.d(jsonData);
+      final statusCode = jsonData['status_code'];
+      print("statusCode:");
+      _logger.d(statusCode);
+      final message = jsonData['message'];
+      print("message:");
+      _logger.d(message);
+      final data = jsonData['data'];
+      print("data:");
+      _logger.d(data);
 
       if (statusCode != 200) {
         if (statusCode == 404) {
           return DataFailure('User not found', statusCode);
         }
-        return DataFailure(jsonData['message'], statusCode);
+        return DataFailure(message, statusCode);
       }
       return DataSuccess(
-        AppUser.fromJson(jsonDecode(response.body)),
+        AppUser.fromJson(data),
         jsonData['message'],
       );
     } catch (e) {

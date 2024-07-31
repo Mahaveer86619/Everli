@@ -1,53 +1,39 @@
 package db
 
 import (
-	"context"
+	"database/sql"
 	"fmt"
 	"os"
 
-	"github.com/jackc/pgx/v4"
 	_ "github.com/lib/pq"
 )
 
-var db *pgx.Conn
+var db *sql.DB
 
-func ConnectDB() (*pgx.Conn, error) {
-	// Get database connection details from environment variables
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbUser := os.Getenv("DB_USER")
-	dbPass := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-
-	// Create the connection string
-	connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", dbUser, dbPass, dbHost, dbPort, dbName)
-
-	// Connect to the database
-	conn, err := pgx.Connect(context.Background(), connString)
+func ConnectDB() (*sql.DB, error) {
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		fmt.Printf("Unable to connect to database: %v", err)
 	}
 
-	return conn, nil
+	return db, nil
 }
 
 // SetDBConnection sets the database connection
-func SetDBConnection(conn *pgx.Conn) {
+func SetDBConnection(conn *sql.DB) {
 	db = conn
 }
 
 // GetDBConnection returns the database connection
-func GetDBConnection() *pgx.Conn {
+func GetDBConnection() *sql.DB {
 	return db
 }
 
-func CloseDBConnection(conn *pgx.Conn) {
-	conn.Close(context.Background())
+func CloseDBConnection(conn *sql.DB) {
+	conn.Close()
 }
 
-func CreateTables(conn *pgx.Conn) error {
-	ctx := context.Background()
-
+func CreateTables(conn *sql.DB) error {
 	queries := []string{
 		`CREATE TABLE IF NOT EXISTS profiles (
   			id UUID PRIMARY KEY,
@@ -111,7 +97,7 @@ func CreateTables(conn *pgx.Conn) error {
 	}
 
 	for _, query := range queries {
-		_, err := conn.Exec(ctx, query)
+		_, err := conn.Exec(query)
 		if err != nil {
 			return fmt.Errorf("error creating table: %w", err)
 		}

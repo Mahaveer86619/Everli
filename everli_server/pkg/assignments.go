@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -26,7 +25,6 @@ type Assignment struct {
 
 func CreateAssignment(assignment *Assignment) (*Assignment, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 		INSERT INTO assignments (id, event_id, member_id, goal, description, due_date, status, is_completed, created_at, updated_at)
@@ -37,7 +35,6 @@ func CreateAssignment(assignment *Assignment) (*Assignment, int, error) {
 	assignment.Id = uuid.New().String()
 
 	if err := conn.QueryRow(
-		ctx,
 		query,
 		assignment.Id,
 		assignment.EventId,
@@ -70,7 +67,6 @@ func CreateAssignment(assignment *Assignment) (*Assignment, int, error) {
 
 func GetAssignment(assignment_id string) (*Assignment, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 	  SELECT *
@@ -79,7 +75,6 @@ func GetAssignment(assignment_id string) (*Assignment, int, error) {
 	`
 	var assignment Assignment
 	if err := conn.QueryRow(
-		ctx,
 		query,
 		assignment_id,
 	).Scan(
@@ -105,7 +100,6 @@ func GetAssignment(assignment_id string) (*Assignment, int, error) {
 
 func GetAssignmentsByEventId(event_id string) ([]Assignment, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 	  SELECT *
@@ -113,7 +107,7 @@ func GetAssignmentsByEventId(event_id string) ([]Assignment, int, error) {
 	  WHERE event_id = $1
 	`
 
-	rows, err := conn.Query(ctx, query, event_id)
+	rows, err := conn.Query(query, event_id)
 	if err != nil {
 		fmt.Print("error getting assignments: %w", err)
 	}
@@ -148,7 +142,6 @@ func GetAssignmentsByEventId(event_id string) ([]Assignment, int, error) {
 
 func GetAssignmentsByMemberId(member_id string) ([]Assignment, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 	  SELECT *
@@ -156,7 +149,7 @@ func GetAssignmentsByMemberId(member_id string) ([]Assignment, int, error) {
 	  WHERE member_id = $1
 	`
 
-	rows, err := conn.Query(ctx, query, member_id)
+	rows, err := conn.Query(query, member_id)
 	if err != nil {
 		fmt.Print("error getting assignments: %w", err)
 	}
@@ -188,7 +181,6 @@ func GetAssignmentsByMemberId(member_id string) ([]Assignment, int, error) {
 
 func UpdateAssignment(assignment *Assignment) (*Assignment, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `UPDATE assignments 
 	SET event_id = $1, member_id = $2, goal = $3, description = $4, due_date = $5, status = $6, created_at = $7, updated_at = $8
@@ -196,7 +188,6 @@ func UpdateAssignment(assignment *Assignment) (*Assignment, int, error) {
 	`
 
 	if err := conn.QueryRow(
-		ctx,
 		query,
 		assignment.EventId,
 		assignment.MemberId,
@@ -208,7 +199,7 @@ func UpdateAssignment(assignment *Assignment) (*Assignment, int, error) {
 		assignment.CreatedAt,
 		assignment.UpdatedAt,
 		assignment.Id,
-		).Scan(
+	).Scan(
 		&assignment.Id,
 		&assignment.EventId,
 		&assignment.MemberId,
@@ -231,19 +222,35 @@ func UpdateAssignment(assignment *Assignment) (*Assignment, int, error) {
 
 func DeleteAssignment(assignment_id string) (int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
-	query := "DELETE FROM assignments WHERE id = $1"
+	query := `SELECT * FROM assignments WHERE id = $1`
+	del_query := "DELETE FROM assignments WHERE id = $1"
 
-	result, err := conn.Exec(ctx, query, assignment_id)
-	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
-	}
-
-	rowsAffected := result.RowsAffected()
-
-	if rowsAffected == 0 {
-		return http.StatusNotFound, fmt.Errorf("assignment not found with id: %s", assignment_id)
+	var assignment Assignment
+	if err := conn.QueryRow(
+		query,
+		assignment_id,
+	).Scan(
+		&assignment.Id,
+		&assignment.EventId,
+		&assignment.MemberId,
+		&assignment.Goal,
+		&assignment.Description,
+		&assignment.DueDate,
+		&assignment.Status,
+		&assignment.IsCompleted,
+		&assignment.CreatedAt,
+		&assignment.UpdatedAt,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return http.StatusNotFound, fmt.Errorf("assignment not found with id: %s", assignment_id)
+		}
+		return http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+	} else {
+		_, err = conn.Exec(del_query, assignment_id)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
+		}
 	}
 
 	return http.StatusNoContent, nil

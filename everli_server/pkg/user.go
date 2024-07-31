@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -38,7 +37,6 @@ type pg_return struct {
 
 func Createuser(user *MyUser) (*MyUser, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 		INSERT INTO profiles (id, firebase_uid, username, email, avatar_url, bio, skills, created_at, updated_at)
@@ -51,7 +49,6 @@ func Createuser(user *MyUser) (*MyUser, int, error) {
 
 	var pg_user pg_return
 	err := conn.QueryRow(
-		ctx,
 		query,
 		user.Id,
 		user.Firebase_uid,
@@ -89,14 +86,13 @@ func Createuser(user *MyUser) (*MyUser, int, error) {
 
 func GetAllUsers() ([]MyUser, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 	  SELECT *
 	  FROM profiles
 	`
 
-	rows, err := conn.Query(ctx, query)
+	rows, err := conn.Query(query)
 	if err != nil {
 		fmt.Print("error getting users: %w", err)
 	}
@@ -107,7 +103,7 @@ func GetAllUsers() ([]MyUser, int, error) {
 	for rows.Next() {
 		var user *MyUser
 		var pg_return pg_return
-		err := rows.Scan(
+		if err := rows.Scan(
 			&pg_return.Id,
 			&pg_return.Firebase_uid,
 			&pg_return.Username,
@@ -116,8 +112,8 @@ func GetAllUsers() ([]MyUser, int, error) {
 			&pg_return.Bio,
 			&pg_return.Skills,
 			&pg_return.Created_at,
-			&pg_return.Updated_at)
-		if err != nil {
+			&pg_return.Updated_at,
+		); err != nil {
 			if err == sql.ErrNoRows {
 				return []MyUser{}, http.StatusOK, nil
 			}
@@ -136,7 +132,6 @@ func GetAllUsers() ([]MyUser, int, error) {
 
 func GetUserByID(userID string) (*MyUser, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 	  SELECT *
@@ -145,7 +140,6 @@ func GetUserByID(userID string) (*MyUser, int, error) {
 	`
 	var pg_return pg_return
 	if err := conn.QueryRow(
-		ctx,
 		query,
 		userID,
 	).Scan(
@@ -175,7 +169,6 @@ func GetUserByID(userID string) (*MyUser, int, error) {
 
 func GetUserByFirebaseID(firebase_id string) (*MyUser, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `
 	  SELECT *
@@ -184,7 +177,6 @@ func GetUserByFirebaseID(firebase_id string) (*MyUser, int, error) {
 	`
 	var pg_return pg_return
 	if err := conn.QueryRow(
-		ctx,
 		query,
 		firebase_id,
 	).Scan(
@@ -214,7 +206,6 @@ func GetUserByFirebaseID(firebase_id string) (*MyUser, int, error) {
 
 func UpdateUser(user *MyUser) (*MyUser, int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
 	query := `UPDATE profiles 
 	SET firebase_uid = $1, username = $2, email = $3, bio = $4, avatar_url = $5, skills = $6, created_at = $7, updated_at = $8
@@ -225,7 +216,6 @@ func UpdateUser(user *MyUser) (*MyUser, int, error) {
 	var pg_return pg_return
 
 	if err := conn.QueryRow(
-		ctx,
 		query,
 		user.Firebase_uid,
 		user.Username,
@@ -235,7 +225,8 @@ func UpdateUser(user *MyUser) (*MyUser, int, error) {
 		skillsStr,
 		user.Created_at,
 		user.Updated_at,
-		user.Id).Scan(
+		user.Id,
+	).Scan(
 		&pg_return.Id,
 		&pg_return.Firebase_uid,
 		&pg_return.Username,
@@ -244,7 +235,8 @@ func UpdateUser(user *MyUser) (*MyUser, int, error) {
 		&pg_return.Bio,
 		&pg_return.Skills,
 		&pg_return.Created_at,
-		&pg_return.Updated_at); err != nil {
+		&pg_return.Updated_at,
+	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, http.StatusNotFound, fmt.Errorf("user not found with id: %s", user.Id)
 		}
@@ -261,19 +253,34 @@ func UpdateUser(user *MyUser) (*MyUser, int, error) {
 
 func DeleteUser(userId string) (int, error) {
 	conn := db.GetDBConnection()
-	ctx := context.Background()
 
-	query := "DELETE FROM profiles WHERE id = $1"
+	query := `SELECT * FROM profiles WHERE id = $1`
+	del_query := "DELETE FROM profiles WHERE id = $1"
 
-	result, err := conn.Exec(ctx, query, userId)
-	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
-	}
-
-	rowsAffected := result.RowsAffected()
-
-	if rowsAffected == 0 {
-		return http.StatusNotFound, fmt.Errorf("user not found with id: %s", userId)
+	var pg_return pg_return
+	if err := conn.QueryRow(
+		query,
+		userId,
+	).Scan(
+		&pg_return.Id,
+		&pg_return.Firebase_uid,
+		&pg_return.Username,
+		&pg_return.Email,
+		&pg_return.Avatar_url,
+		&pg_return.Bio,
+		&pg_return.Skills,
+		&pg_return.Created_at,
+		&pg_return.Updated_at,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return http.StatusNotFound, fmt.Errorf("user not found with id: %s", userId)
+		}
+		return http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+	} else {
+		_, err = conn.Exec(del_query, userId)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
+		}
 	}
 
 	return http.StatusNoContent, nil

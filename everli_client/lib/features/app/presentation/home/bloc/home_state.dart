@@ -30,6 +30,12 @@ final class HomeEventLoaded extends HomeState {
   HomeEventLoaded({required this.events});
 }
 
+final class HomeEventMembersLoaded extends HomeState {
+  final List<AppUser> members;
+
+  HomeEventMembersLoaded({required this.members});
+}
+
 final class HomeAssignmentsLoaded extends HomeState {
   final List<MyAssignment> assignments;
 

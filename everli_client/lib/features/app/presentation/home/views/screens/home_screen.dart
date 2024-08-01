@@ -35,10 +35,10 @@ class _HomeScreenState extends State<HomeScreen> {
         content: Text(
           message,
           style: TextStyle(
-            color: Theme.of(context).colorScheme.onBackground,
+            color: Theme.of(context).colorScheme.onError,
           ),
         ),
-        backgroundColor: Theme.of(context).colorScheme.background,
+        backgroundColor: Theme.of(context).colorScheme.error,
       ),
     );
   }
@@ -290,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(height: 16, width: double.infinity),
         SizedBox(
-          height: 350,
+          height: 320,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: events.length,
@@ -319,6 +319,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
           ),
         ),
+        
       ],
     );
   }

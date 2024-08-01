@@ -1,14 +1,35 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:everli_client/core/common/constants/app_constants.dart';
+import 'package:everli_client/core/common/models/app_user.dart';
+import 'package:everli_client/core/resources/helpers.dart';
 import 'package:everli_client/features/app/model/event.dart';
+import 'package:everli_client/features/app/presentation/home/cubit/home_cubit.dart';
 import 'package:everli_client/features/app/presentation/home/views/widgets/chips.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-class EventTile extends StatelessWidget {
-  // event, members, creator
+class EventTile extends StatefulWidget {
   final MyEvent event;
   const EventTile({super.key, required this.event});
+
+  @override
+  State<EventTile> createState() => _EventTileState();
+}
+
+class _EventTileState extends State<EventTile> {
+  List<AppUser> members = [];
+
+  @override
+  void initState() {
+    context.read<HomeCubit>().fetchEventMembers(widget.event.id);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    members.clear();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,98 +44,112 @@ class EventTile extends StatelessWidget {
       width: MediaQuery.of(context).size.width * 0.7,
       margin: const EdgeInsets.symmetric(horizontal: 8),
       padding: const EdgeInsets.all(8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: CachedNetworkImage(
-              width: MediaQuery.of(context).size.width * 0.8,
-              imageUrl: event.imageUrl ?? defaultEventImageUrl,
-              errorWidget: (context, url, error) => const Icon(Icons.error),
-            ),
-          ),
-          // chips
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: event.tags.map((tag) => MyChips(title: tag)).toList(),
+      child:
+          BlocConsumer<HomeCubit, HomeCubitState>(listener: (context, state) {
+        if (state is HomeCubitError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                state.message,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onError,
+                ),
               ),
+              backgroundColor: Theme.of(context).colorScheme.error,
             ),
-          ),
-          // Title and description
-          const SizedBox(height: 12),
-          Text(
-            event.title,
-            style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-          ),
-          Text(
-            formatDate(event.createdAt),
-            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                  color:
-                      Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                ),
-          ),
-          const SizedBox(height: 12),
-          LinearProgressIndicator(
-            value: 0.8,
-            borderRadius: BorderRadius.circular(8),
-            color: Theme.of(context).colorScheme.primary,
-            backgroundColor: Theme.of(context).colorScheme.surface,
-          ),
-          // Row(
-          //   children: [
-          //     buildMemberAvatars(
-          //       context,
-          //       [defaultAvatarUrl, defaultAvatarUrl, defaultAvatarUrl],
-          //     ),
-          //   ],
-          // )
-        ],
-      ),
+          );
+        }
+      }, builder: (context, state) {
+        if (state is HomeEventMembersLoaded) {
+          members = state.members;
+        }
+        return _buildCard(
+          context,
+          widget.event,
+          members,
+        );
+      }),
     );
   }
 
-  // buildMemberAvatars(BuildContext context, List<String> memberUrls) {
-  //   const int maxMembersToShow = 5;
-  //   final int memberCount = memberUrls.length;
+  _buildCard(BuildContext context, MyEvent event, List<AppUser> members) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Image
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: CachedNetworkImage(
+            width: MediaQuery.of(context).size.width * 0.8,
+            imageUrl: event.imageUrl ?? defaultEventImageUrl,
+            errorWidget: (context, url, error) => const Icon(Icons.error),
+          ),
+        ),
+        // chips
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: event.tags.map((tag) => MyChips(title: tag)).toList(),
+            ),
+          ),
+        ),
+        // Title and description
+        const SizedBox(height: 12),
+        Text(
+          formatString(event.title, 22),
+          style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+        ),
+        Text(
+          formatDate(event.createdAt),
+          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildOverlappingAvatars(members),
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              child: Icon(
+                Icons.arrow_forward,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 
-  //   return Stack(
-  //     children: [
-  //       for (int i = 0; i < memberCount && i < maxMembersToShow; i++)
-  //         Positioned(
-  //           left: (i * 40.0) - (i * 10.0),
-  //           top: 0.0,
-  //           child: CircleAvatar(
-  //             backgroundImage: NetworkImage(memberUrls[i]),
-  //             radius: 20.0, // Adjust avatar size
-  //           ),
-  //         ),
-  //       if (memberCount > maxMembersToShow)
-  //         Positioned(
-  //           right: 0.0,
-  //           child: CircleAvatar(
-  //             backgroundColor: Colors.grey[200],
-  //             radius: 15.0, // Adjust size of "more members" avatar
-  //             child: Text(
-  //               "+${memberCount - maxMembersToShow}",
-  //               style: TextStyle(
-  //                   color: Theme.of(context).colorScheme.onBackground),
-  //             ),
-  //           ),
-  //         ),
-  //     ],
-  //   );
-  // }
-
-  String formatDate(String iso8601String) {
-    final DateTime dateTime = DateTime.parse(iso8601String);
-    return DateFormat('d MMMM, yyyy').format(dateTime);
+  _buildOverlappingAvatars(List<AppUser> members) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        children: [
+          for (int i = 0; i < members.length; i++)
+            Align(
+              widthFactor: 0.7,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(30),
+                child: CachedNetworkImage(
+                  width: 30,
+                  height: 30,
+                  fit: BoxFit.cover,
+                  imageUrl: members[i].avatarUrl,
+                  errorWidget: (context, url, error) => const Icon(Icons.error),
+                ),
+              ),
+            )
+        ],
+      ),
+    );
   }
 }

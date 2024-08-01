@@ -16,6 +16,12 @@ class FetchMyEvents extends HomeEvent {
   FetchMyEvents({required this.userId});
 }
 
+class FetchEventMembers extends HomeEvent {
+  final String eventId;
+
+  FetchEventMembers({required this.eventId});
+}
+
 class FetchMyAssignments extends HomeEvent {
   final String userId;
 

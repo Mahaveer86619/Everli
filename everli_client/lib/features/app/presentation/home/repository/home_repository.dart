@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:everli_client/core/common/models/app_user.dart';
 import 'package:everli_client/features/app/model/assignments.dart';
 import 'package:everli_client/features/app/model/checkpoint.dart';
 import 'package:everli_client/features/app/model/role.dart';
@@ -98,6 +99,90 @@ class HomeRepository {
       return DataSuccess(MyEvent.fromJson(eventsData), message);
     } catch (e) {
       _logger.e(e.toString());
+      return DataFailure(e.toString(), -1);
+    }
+  }
+
+  Future<DataState<List<AppUser>>> getEventMembers(
+    String eventId,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '${dotenv.get('BASE_URL')}/api/v1/roles/event?event_id=$eventId',
+        ),
+      );
+
+      final jsonData = jsonDecode(response.body);
+      final statusCode = jsonData['status_code'];
+      final message = jsonData['message'];
+      final List<dynamic> rolesData;
+
+      if (statusCode != 200) {
+        if (statusCode == 404) {
+          return DataFailure('No event found', statusCode);
+        }
+        return DataFailure(message, statusCode);
+      }
+
+      if (jsonData['data'] == null) {
+        rolesData = List<AppUser>.empty();
+      } else {
+        rolesData = jsonData['data'] as List<dynamic>;
+      }
+
+      final roles =
+          rolesData.map((roleData) => MyRole.fromJson(roleData)).toList();
+
+      final memberId = roles.map((role) => role.memberId).toList();
+
+      final membersFuture =
+          memberId.map((memberId) => getMemberDetails(memberId));
+      final members = await Future.wait(membersFuture);
+
+      if (members.every((member) => member is DataSuccess)) {
+        final successfulMembers = members
+            .cast<DataSuccess<AppUser>>()
+            .map((resp) => resp.data!)
+            .toList();
+
+        return DataSuccess(successfulMembers, 'Members fetched successfully');
+      } else {
+        // print if needed
+        // final failedMembers =
+        //     members.where((members) => members is! DataSuccess).toList();
+        return const DataFailure('Failed to fetch some members', -1);
+      }
+    } catch (e) {
+      _logger.e(e.toString());
+      return DataFailure(e.toString(), -1);
+    }
+  }
+
+  Future<DataState<AppUser>> getMemberDetails(String userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '${dotenv.get('BASE_URL')}/api/v1/users?id=$userId',
+        ),
+      );
+
+      final jsonData = jsonDecode(response.body);
+      final statusCode = jsonData['status_code'];
+      final message = jsonData['message'];
+      final data = jsonData['data'];
+
+      if (statusCode != 200) {
+        if (statusCode == 404) {
+          return DataFailure('User not found', statusCode);
+        }
+        return DataFailure(message, statusCode);
+      }
+      return DataSuccess(
+        AppUser.fromJson(data),
+        message,
+      );
+    } catch (e) {
       return DataFailure(e.toString(), -1);
     }
   }

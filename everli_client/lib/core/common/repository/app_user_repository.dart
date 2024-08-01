@@ -52,17 +52,9 @@ class AppUserRepository {
       );
 
       final jsonData = jsonDecode(response.body);
-      print("jsonData:");
-      _logger.d(jsonData);
       final statusCode = jsonData['status_code'];
-      print("statusCode:");
-      _logger.d(statusCode);
       final message = jsonData['message'];
-      print("message:");
-      _logger.d(message);
       final data = jsonData['data'];
-      print("data:");
-      _logger.d(data);
 
       if (statusCode != 200) {
         if (statusCode == 404) {

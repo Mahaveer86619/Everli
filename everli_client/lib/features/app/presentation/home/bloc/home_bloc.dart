@@ -28,6 +28,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<FetchAll>(_fetchAll);
     on<FetchAppUser>(_fetchAppUser);
     on<FetchMyEvents>(_fetchMyEvents);
+    on<FetchEventMembers>(_fetchEventMembers);
     on<FetchMyAssignments>(_fetchMyAssignments);
     on<FetchMyCheckpoints>(_fetchMyCheckpoints);
   }
@@ -60,24 +61,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       } else {
         emit(HomeError(error: 'Error fetching data'));
       }
-      // if (eventsResponse is DataSuccess) {
-      //   final events = eventsResponse.data ?? [];
-      //   _logger.d(events.toString());
-      //   if (assignmentsResponse is DataSuccess) {
-      //     final assignments = assignmentsResponse.data ?? [];
-      //     _logger.d(assignments.toString());
-      //     if (checkpointsResponse is DataSuccess) {
-      //       final checkpoints = checkpointsResponse.data ?? [];
-      //       _logger.d(checkpoints.toString());
-      //       emit(HomeLoaded(
-      //         user: user,
-      //         events: events,
-      //         assignments: assignments,
-      //         checkpoints: checkpoints,
-      //       ));
-      //     }
-      //   }
-      // }
     } catch (e) {
       _logger.e(e.toString());
       emit(HomeError(error: 'Error fetching data: $e'));
@@ -109,6 +92,22 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       }
     } catch (e) {
       emit(HomeError(error: 'Error fetching my events: $e'));
+    }
+  }
+
+  Future<void> _fetchEventMembers(
+    FetchEventMembers event,
+    Emitter<HomeState> emit,
+  ) async {
+    try {
+      final members = await _homeRepository.getEventMembers(event.eventId);
+      if (members is DataSuccess) {
+        emit(HomeEventMembersLoaded(members: members.data!));
+      } else {
+        emit(HomeError(error: 'Error fetching event members'));
+      }
+    } catch (e) {
+      emit(HomeError(error: 'Error fetching event members: $e'));
     }
   }
 

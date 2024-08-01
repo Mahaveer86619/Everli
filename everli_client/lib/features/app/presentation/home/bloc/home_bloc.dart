@@ -37,35 +37,47 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     Emitter<HomeState> emit,
   ) async {
     try {
-      final user = await _appUserCubit.getUser();
-      _logger.d(user.toString());
       final eventsResponse = await _homeRepository.getMyEvents(
-        user.id,
+        event.userId,
       );
       final assignmentsResponse = await _homeRepository.getMyAssignments(
-        user.id,
+        event.userId,
       );
       final checkpointsResponse = await _homeRepository.getMyCheckpoints(
-        user.id,
+        event.userId,
       );
-      if (eventsResponse is DataSuccess) {
-        final events = eventsResponse.data ?? [];
-        _logger.d(events.toString());
-        if (assignmentsResponse is DataSuccess) {
-          final assignments = assignmentsResponse.data ?? [];
-          _logger.d(assignments.toString());
-          if (checkpointsResponse is DataSuccess) {
-            final checkpoints = checkpointsResponse.data ?? [];
-            _logger.d(checkpoints.toString());
-            emit(HomeLoaded(
-              user: user,
-              events: events,
-              assignments: assignments,
-              checkpoints: checkpoints,
-            ));
-          }
-        }
+      if (eventsResponse is DataSuccess &&
+          assignmentsResponse is DataSuccess &&
+          checkpointsResponse is DataSuccess) {
+        final events = eventsResponse.data!;
+        final assignments = assignmentsResponse.data!;
+        final checkpoints = checkpointsResponse.data!;
+        emit(HomeLoaded(
+          events: events,
+          assignments: assignments,
+          checkpoints: checkpoints,
+        ));
+      } else {
+        emit(HomeError(error: 'Error fetching data'));
       }
+      // if (eventsResponse is DataSuccess) {
+      //   final events = eventsResponse.data ?? [];
+      //   _logger.d(events.toString());
+      //   if (assignmentsResponse is DataSuccess) {
+      //     final assignments = assignmentsResponse.data ?? [];
+      //     _logger.d(assignments.toString());
+      //     if (checkpointsResponse is DataSuccess) {
+      //       final checkpoints = checkpointsResponse.data ?? [];
+      //       _logger.d(checkpoints.toString());
+      //       emit(HomeLoaded(
+      //         user: user,
+      //         events: events,
+      //         assignments: assignments,
+      //         checkpoints: checkpoints,
+      //       ));
+      //     }
+      //   }
+      // }
     } catch (e) {
       _logger.e(e.toString());
       emit(HomeError(error: 'Error fetching data: $e'));
@@ -92,8 +104,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       final events = await _homeRepository.getMyEvents(event.userId);
       if (events is DataSuccess) {
         emit(HomeEventLoaded(events: events.data!));
+      } else {
+        emit(HomeError(error: 'Error fetching my events'));
       }
-      emit(HomeError(error: 'Error fetching my events'));
     } catch (e) {
       emit(HomeError(error: 'Error fetching my events: $e'));
     }
@@ -107,8 +120,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       final assignments = await _homeRepository.getMyAssignments(event.userId);
       if (assignments is DataSuccess) {
         emit(HomeAssignmentsLoaded(assignments: assignments.data!));
+      } else {
+        emit(HomeError(error: 'Error fetching my assignments'));
       }
-      emit(HomeError(error: 'Error fetching my assignments'));
     } catch (e) {
       emit(HomeError(error: 'Error fetching my assignments: $e'));
     }
@@ -122,8 +136,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       final checkpoints = await _homeRepository.getMyCheckpoints(event.userId);
       if (checkpoints is DataSuccess) {
         emit(HomeCheckpointsLoaded(checkpoints: checkpoints.data!));
+      } else {
+        emit(HomeError(error: 'Error fetching my checkpoints'));
       }
-      emit(HomeError(error: 'Error fetching my checkpoints'));
     } catch (e) {
       emit(HomeError(error: 'Error fetching my checkpoints: $e'));
     }

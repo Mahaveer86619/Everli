@@ -2,7 +2,11 @@ part of 'home_bloc.dart';
 
 sealed class HomeEvent {}
 
-class FetchAll extends HomeEvent {}
+class FetchAll extends HomeEvent {
+  final String userId;
+
+  FetchAll({required this.userId});
+}
 
 class FetchAppUser extends HomeEvent {}
 

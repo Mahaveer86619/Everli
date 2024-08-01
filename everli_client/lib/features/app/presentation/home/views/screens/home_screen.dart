@@ -1,4 +1,3 @@
-import 'package:everli_client/core/common/constants/app_constants.dart';
 import 'package:everli_client/core/common/models/app_user.dart';
 import 'package:everli_client/core/common/widgets/error_screen.dart';
 import 'package:everli_client/core/common/widgets/loading_screen.dart';
@@ -19,6 +18,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final int taskCount = 3;
+  AppUser user = AppUser.empty();
 
   _changeScreen(Widget screen) {
     Navigator.pushReplacement(
@@ -31,15 +31,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
   _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onBackground,
+          ),
+        ),
+        backgroundColor: Theme.of(context).colorScheme.background,
+      ),
     );
   }
 
   @override
   void initState() {
     super.initState();
-
-    context.read<HomeBloc>().add(FetchAll());
+    context.read<HomeBloc>().add(FetchAppUser());
   }
 
   @override
@@ -50,6 +57,11 @@ class _HomeScreenState extends State<HomeScreen> {
           if (state is HomeError) {
             _showMessage(state.error);
           }
+          if (state is HomeUserLoaded) {
+            user = state.user;
+
+            context.read<HomeBloc>().add(FetchAll(userId: user.id));
+          }
         },
         builder: (context, state) {
           if (state is HomeLoading) {
@@ -57,6 +69,9 @@ class _HomeScreenState extends State<HomeScreen> {
           }
           if (state is HomeError) {
             return ErrorScreen(error: state.error);
+          }
+          if (state is HomeUserLoaded) {
+            return _buildLoadingScreen(state.user);
           }
           if (state is HomeLoaded) {
             return _buildBody(state);
@@ -75,11 +90,32 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
           child: Column(
             children: [
-              _buildHeader(state.user),
+              _buildHeader(user),
               const SizedBox(height: 32),
               _buildProjectSection(state.events),
               const SizedBox(height: 32),
               _buildTodaysTasks(state.assignments),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  _buildLoadingScreen(AppUser user) {
+    return Scaffold(
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
+          child: Column(
+            children: [
+              _buildHeader(user),
+              const SizedBox(height: 8),
+              LinearProgressIndicator(
+                backgroundColor: Theme.of(context).colorScheme.background,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ],
           ),
         ),
@@ -100,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: 50,
                 height: 50,
                 fit: BoxFit.cover,
-                imageUrl: defaultAvatarUrl,
+                imageUrl: user.avatarUrl,
                 errorWidget: (context, url, error) => const Icon(Icons.error),
               ),
             ),
@@ -110,18 +146,18 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  user.username,
-                  style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                        color: Theme.of(context).colorScheme.onBackground,
-                      ),
-                ),
-                Text(
-                  'You have $taskCount tasks today',
+                  'Hello,',
                   style: Theme.of(context).textTheme.titleSmall!.copyWith(
                         color: Theme.of(context)
                             .colorScheme
                             .onBackground
-                            .withOpacity(0.5),
+                            .withOpacity(0.7),
+                      ),
+                ),
+                Text(
+                  user.username,
+                  style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                        color: Theme.of(context).colorScheme.onBackground,
                       ),
                 ),
               ],
@@ -227,7 +263,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   _buildProjectSection(List<MyEvent> events) {
-    // final List<MyEvent> events = getEvents();
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Text(
-            '${events.length} events joined',
+            '${events.length} Events joined',
             style: Theme.of(context).textTheme.titleSmall!.copyWith(
                   color: Theme.of(context)
                       .colorScheme
@@ -271,7 +306,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   _buildTodaysTasks(List<MyAssignment> assignments) {
-    // final List<MyAssignment> assignments = getAssignments();
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -288,92 +322,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     );
   }
-}
-
-List<MyEvent> getEvents() {
-  return [
-    MyEvent(
-      id: 'id',
-      creatorId: "creatorId",
-      title: "Mobile app design",
-      description: "Design a mobile app for a startup in India",
-      createdAt: DateTime.now().toIso8601String(),
-      updatedAt: DateTime.now().toIso8601String(),
-      tags: ["High Priority", "In Progress", "Tech", "Design"],
-    ),
-    MyEvent(
-      id: 'id',
-      creatorId: "creatorId",
-      title: "Mobile app design",
-      description: "Design a mobile app for a startup in India",
-      imageUrl:
-          "https://www.9series.com/img/services/design/leading%20Mobile%20app%20design%20company%20in%20India.jpeg",
-      createdAt: DateTime.now().toIso8601String(),
-      updatedAt: DateTime.now().toIso8601String(),
-      tags: ["High Priority", "In Progress"],
-    ),
-    MyEvent(
-      id: 'id',
-      creatorId: "creatorId",
-      title: "Mobile app design",
-      description: "Design a mobile app for a startup in India",
-      imageUrl:
-          "https://www.9series.com/img/services/design/leading%20Mobile%20app%20design%20company%20in%20India.jpeg",
-      createdAt: DateTime.now().toIso8601String(),
-      updatedAt: DateTime.now().toIso8601String(),
-      tags: ["High Priority", "In Progress"],
-    ),
-    MyEvent(
-      id: 'id',
-      creatorId: "creatorId",
-      title: "Mobile app design",
-      description: "Design a mobile app for a startup in India",
-      imageUrl:
-          "https://www.9series.com/img/services/design/leading%20Mobile%20app%20design%20company%20in%20India.jpeg",
-      createdAt: DateTime.now().toIso8601String(),
-      updatedAt: DateTime.now().toIso8601String(),
-      tags: ["High Priority", "In Progress"],
-    ),
-  ];
-}
-
-List<MyAssignment> getAssignments() {
-  return [
-    MyAssignment(
-      id: 'id',
-      eventId: 'eventId',
-      memberId: 'memberId',
-      goal: 'Onboarding of mobile app',
-      description: 'description',
-      dueDate: DateTime.now(),
-      isCompleted: false,
-    ),
-    MyAssignment(
-      id: 'id',
-      eventId: 'eventId',
-      memberId: 'memberId',
-      goal: 'goal',
-      description: 'description',
-      dueDate: DateTime.now(),
-      isCompleted: false,
-    ),
-    MyAssignment(
-      id: 'id',
-      eventId: 'eventId',
-      memberId: 'memberId',
-      goal: 'goal',
-      description: 'description',
-      dueDate: DateTime.now(),
-      isCompleted: false,
-    ),
-    MyAssignment(
-      id: 'id',
-      eventId: 'eventId',
-      memberId: 'memberId',
-      goal: 'goal',
-      description: 'description',
-      dueDate: DateTime.now(),
-      isCompleted: false,
-    ),
-  ];
 }

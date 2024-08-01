@@ -20,5 +20,9 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-volumes:  
+networks:
+  everli-network:
+    driver: bridge
+
+volumes:
   pgdata: {}

@@ -7,13 +7,11 @@ final class HomeInitial extends HomeState {}
 final class HomeLoading extends HomeState {}
 
 final class HomeLoaded extends HomeState {
-  final AppUser user;
   final List<MyEvent> events;
   final List<MyAssignment> assignments;
   final List<MyCheckpoint> checkpoints;
 
   HomeLoaded({
-    required this.user,
     required this.events,
     required this.assignments,
     required this.checkpoints,

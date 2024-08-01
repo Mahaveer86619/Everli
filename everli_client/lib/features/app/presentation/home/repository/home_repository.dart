@@ -22,37 +22,50 @@ class HomeRepository {
           '${dotenv.get('BASE_URL')}/api/v1/roles/member?member_id=$userId',
         ),
       );
-
       final jsonData = jsonDecode(response.body);
       final statusCode = jsonData['status_code'];
       final message = jsonData['message'];
-      final data = jsonData['data'] as List<dynamic>;
+      final jData = jsonData['data'];
+      final List<dynamic> data;
+
+      if (jData == null) {
+        data = List<Map<String, dynamic>>.empty();
+      } else {
+        data = jData;
+      }
 
       if (statusCode != 200) {
         if (statusCode == 404) {
-          return DataFailure('No events found', statusCode);
+          return DataFailure('No events found ', statusCode);
         }
         return DataFailure(message, statusCode);
       }
 
-      final roles = data.map((roleData) => MyRole.fromJson(roleData)).toList();
-
-      final eventIds = roles.map((role) => role.eventId).toList();
-
-      final eventsFuture = eventIds.map((eventId) => getEventDetails(eventId));
-      final events = await Future.wait(eventsFuture);
-
-      if (events.every((event) => event is DataSuccess)) {
-        final successfulEvents = events
-            .cast<DataSuccess<MyEvent>>()
-            .map((event) => event.data!)
-            .toList();
-        return DataSuccess(successfulEvents, 'Events fetched successfully');
+      if (data.isEmpty) {
+        return DataSuccess([], message);
       } else {
-        // print if needed
-        // final failedEvents =
-        //     events.where((event) => event is! DataSuccess).toList();
-        return const DataFailure('Failed to fetch some events', -1);
+        final roles =
+            data.map((roleData) => MyRole.fromJson(roleData)).toList();
+
+        final eventIds = roles.map((role) => role.eventId).toList();
+
+        final eventsFuture =
+            eventIds.map((eventId) => getEventDetails(eventId));
+        final events = await Future.wait(eventsFuture);
+
+        if (events.every((event) => event is DataSuccess)) {
+          final successfulEvents = events
+              .cast<DataSuccess<MyEvent>>()
+              .map((event) => event.data!)
+              .toList();
+
+          return DataSuccess(successfulEvents, 'Events fetched successfully');
+        } else {
+          // print if needed
+          // final failedEvents =
+          //     events.where((event) => event is! DataSuccess).toList();
+          return const DataFailure('Failed to fetch some events', -1);
+        }
       }
     } catch (e) {
       _logger.e(e.toString());
@@ -98,19 +111,11 @@ class HomeRepository {
           '${dotenv.get('BASE_URL')}/api/v1/assignments/member?member_id=$userId',
         ),
       );
-
       final jsonData = jsonDecode(response.body);
-      print("jsonData:");
-      _logger.d(jsonData);
       final statusCode = jsonData['status_code'];
-      print("statusCode:");
-      _logger.d(statusCode);
       final message = jsonData['message'];
-      print("message:");
-      _logger.d(message);
-      final assignmentsData = jsonData['data'] as List<dynamic>;
-      print("assignmentsData:");
-      _logger.d(assignmentsData);
+      final List<dynamic> assignmentsData;
+
       if (statusCode != 200) {
         if (statusCode == 404) {
           return DataFailure('No assignments found', statusCode);
@@ -118,9 +123,15 @@ class HomeRepository {
         return DataFailure(jsonData['message'], statusCode);
       }
 
-      final assignments = assignmentsData.map((assignment) => MyAssignment.fromJson(assignment)).toList();
-      print("assignments:");
-      _logger.d(assignments);
+      if (jsonData['data'] == null) {
+        assignmentsData = List<MyAssignment>.empty();
+      } else {
+        assignmentsData = jsonData['data'] as List<dynamic>;
+      }
+
+      final assignments = assignmentsData
+          .map((assignment) => MyAssignment.fromJson(assignment))
+          .toList();
       // final List<MyAssignment> assignments = assignmentsData
       //     .map((assignmentJson) => MyAssignment.fromJson(assignmentJson))
       //     .toList();
@@ -142,20 +153,23 @@ class HomeRepository {
         ),
       );
 
-      final Map<String, dynamic> jsonData = jsonDecode(response.body);
-      final statusCode = response.statusCode;
+      final jsonData = jsonDecode(response.body);
+      final statusCode = jsonData['status_code'];
+      final message = jsonData['message'];
+      final assignmentsData = jsonData['data'];
 
       if (statusCode != 200) {
         if (statusCode == 404) {
           return DataFailure('No assignment found', statusCode);
         }
-        return DataFailure(jsonData['message'], statusCode);
+        return DataFailure(message, statusCode);
       }
 
-      final assignmentData = jsonData['data'];
-      final message = jsonData['message'];
+      if (jsonData['data'] == null) {
+        return DataFailure(message, statusCode);
+      }
 
-      return DataSuccess(MyAssignment.fromJson(assignmentData), message);
+      return DataSuccess(MyAssignment.fromJson(assignmentsData), message);
     } catch (e) {
       return DataFailure(e.toString(), -1);
     }
@@ -170,19 +184,23 @@ class HomeRepository {
           '${dotenv.get('BASE_URL')}/api/v1/checkpoints/member?member_id=$userId',
         ),
       );
-
-      final Map<String, dynamic> jsonData = jsonDecode(response.body);
-      final statusCode = response.statusCode;
+      final jsonData = jsonDecode(response.body);
+      final statusCode = jsonData['status_code'];
+      final message = jsonData['message'];
+      final List<dynamic> checkpointsData;
 
       if (statusCode != 200) {
         if (statusCode == 404) {
-          return DataFailure('No checkpoints found', statusCode);
+          return DataFailure(message, statusCode);
         }
-        return DataFailure(jsonData['message'], statusCode);
+        return DataFailure(message, statusCode);
       }
 
-      final checkpointsData = jsonData['data'] as List<dynamic>;
-      final message = jsonData['message'];
+      if (jsonData['data'] == null) {
+        checkpointsData = List<MyAssignment>.empty();
+      } else {
+        checkpointsData = jsonData['data'] as List<dynamic>;
+      }
 
       final List<MyCheckpoint> checkpoints = checkpointsData
           .map((checkpointJson) => MyCheckpoint.fromJson(checkpointJson))

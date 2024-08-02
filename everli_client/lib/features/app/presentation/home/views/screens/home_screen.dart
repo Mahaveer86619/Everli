@@ -1,11 +1,13 @@
 import 'package:everli_client/core/common/models/app_user.dart';
 import 'package:everli_client/core/common/widgets/error_screen.dart';
 import 'package:everli_client/core/common/widgets/loading_screen.dart';
-import 'package:everli_client/features/app/model/assignments.dart';
-import 'package:everli_client/features/app/model/event.dart';
+import 'package:everli_client/core/common/models/assignments.dart';
+import 'package:everli_client/core/common/models/event.dart';
+import 'package:everli_client/core/resources/helpers.dart';
 import 'package:everli_client/features/app/presentation/home/bloc/home_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:everli_client/features/app/presentation/home/views/widgets/project_tile.dart';
+import 'package:everli_client/features/app/presentation/home/views/widgets/tasks_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -61,6 +63,8 @@ class _HomeScreenState extends State<HomeScreen> {
             user = state.user;
 
             context.read<HomeBloc>().add(FetchAll(userId: user.id));
+
+            // context.read<HomeBloc>().add(FetchMyEvents(userId: user.id));
           }
         },
         builder: (context, state) {
@@ -91,10 +95,10 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             children: [
               _buildHeader(user),
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
               _buildProjectSection(state.events),
               const SizedBox(height: 32),
-              _buildTodaysTasks(state.assignments),
+              _buildUpcomingTasks(state.assignments),
             ],
           ),
         ),
@@ -137,10 +141,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 50,
                 fit: BoxFit.cover,
                 imageUrl: user.avatarUrl,
-                errorWidget: (context, url, error) => const Icon(Icons.error),
+                errorWidget: (context, url, error) => const Icon(
+                  Icons.error,
+                ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,17 +161,35 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                 ),
                 Text(
-                  user.username,
+                  formatString(user.username, 18),
                   style: Theme.of(context).textTheme.titleMedium!.copyWith(
                         color: Theme.of(context).colorScheme.onBackground,
                       ),
                 ),
               ],
             ),
+            const SizedBox(width: 8),
           ],
         ),
-        const SizedBox(height: 8),
-        _moreIcon(),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            IconButton(
+              onPressed: () {
+                // _changeScreen(
+                //   const NotificationScreen(),
+                // );
+              },
+              icon: Icon(
+                Icons.notifications,
+                color: Theme.of(context).colorScheme.onBackground,
+              ),
+            ),
+            const SizedBox(width: 8),
+            _moreIcon(),
+            const SizedBox(width: 8),
+          ],
+        )
       ],
     );
   }
@@ -279,7 +303,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Text(
-            '${events.length} Events joined',
+            '${events.length} ${events.length == 1 ? 'Event' : 'Events'} joined',
             style: Theme.of(context).textTheme.titleSmall!.copyWith(
                   color: Theme.of(context)
                       .colorScheme
@@ -290,7 +314,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(height: 16, width: double.infinity),
         SizedBox(
-          height: 320,
+          height: 330,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: events.length,
@@ -305,21 +329,44 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  _buildTodaysTasks(List<MyAssignment> assignments) {
+  _buildUpcomingTasks(List<MyAssignment> assignments) {
+    final assignment = MyAssignment(
+      id: "id",
+      eventId: "eventId",
+      goal: "Onboarding Screen",
+      description: "Make Onboarding Screen of Everli app.",
+      dueDate: DateTime.now(),
+      isCompleted: false,
+    );
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Text(
-            'Today\'s tasks',
-            style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                  color: Theme.of(context).colorScheme.onBackground,
-                ),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                'Upcoming tasks',
+                style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                      color: Theme.of(context).colorScheme.onBackground,
+                    ),
+              ),
+            ),
+          ],
         ),
-        
+        const SizedBox(
+          height: 12,
+          width: double.infinity,
+        ),
+        TasksTile(
+          assignment: assignment,
+        ),
+        const SizedBox(height: 8),
+        TasksTile(
+          assignment: assignment,
+        ),
       ],
     );
   }

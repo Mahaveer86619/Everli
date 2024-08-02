@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:everli_client/core/common/constants/app_constants.dart';
 import 'package:everli_client/core/common/models/app_user.dart';
 import 'package:everli_client/core/resources/helpers.dart';
-import 'package:everli_client/features/app/model/event.dart';
+import 'package:everli_client/core/common/models/event.dart';
 import 'package:everli_client/features/app/presentation/home/cubit/home_cubit.dart';
 import 'package:everli_client/features/app/presentation/home/views/widgets/chips.dart';
 import 'package:flutter/material.dart';
@@ -100,7 +100,8 @@ class _EventTileState extends State<EventTile> {
         const SizedBox(height: 12),
         Text(
           formatString(event.title, 22),
-          style: Theme.of(context).textTheme.titleLarge!.copyWith(
+          style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                fontSize: 18,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
         ),
@@ -136,15 +137,24 @@ class _EventTileState extends State<EventTile> {
         children: [
           for (int i = 0; i < members.length; i++)
             Align(
-              widthFactor: 0.7,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(30),
-                child: CachedNetworkImage(
-                  width: 30,
-                  height: 30,
-                  fit: BoxFit.cover,
-                  imageUrl: members[i].avatarUrl,
-                  errorWidget: (context, url, error) => const Icon(Icons.error),
+              widthFactor: 0.6,
+              child: CircleAvatar(
+                backgroundColor:
+                    Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                radius: 16,
+                child: CircleAvatar(
+                  radius: 15,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: CachedNetworkImage(
+                      width: 30,
+                      height: 30,
+                      fit: BoxFit.cover,
+                      imageUrl: members[i].avatarUrl,
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.error),
+                    ),
+                  ),
                 ),
               ),
             )

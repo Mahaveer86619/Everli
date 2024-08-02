@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'package:everli_client/core/common/models/app_user.dart';
-import 'package:everli_client/features/app/model/assignments.dart';
-import 'package:everli_client/features/app/model/checkpoint.dart';
-import 'package:everli_client/features/app/model/role.dart';
+import 'package:everli_client/core/common/models/assignments.dart';
+import 'package:everli_client/core/common/models/checkpoint.dart';
+import 'package:everli_client/core/common/models/role.dart';
 import 'package:logger/logger.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:everli_client/features/app/model/event.dart';
+import 'package:everli_client/core/common/models/event.dart';
 import 'package:everli_client/core/resources/data_state.dart';
 
 class HomeRepository {

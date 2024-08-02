@@ -1,9 +1,11 @@
 import 'package:everli_client/core/common/cubit/app_user_cubit.dart';
 import 'package:everli_client/core/common/models/app_user.dart';
 import 'package:everli_client/core/resources/data_state.dart';
-import 'package:everli_client/features/app/model/assignments.dart';
-import 'package:everli_client/features/app/model/checkpoint.dart';
-import 'package:everli_client/features/app/model/event.dart';
+import 'package:everli_client/core/common/models/assignments.dart';
+import 'package:everli_client/core/common/models/checkpoint.dart';
+import 'package:everli_client/core/common/models/event.dart';
+import 'package:everli_client/features/app/model/joined_events.dart';
+import 'package:everli_client/features/app/presentation/home/cubit/home_cubit.dart';
 import 'package:everli_client/features/app/presentation/home/repository/home_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
@@ -13,14 +15,17 @@ part 'home_state.dart';
 
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final HomeRepository _homeRepository;
+  final HomeCubit _homeCubit;
   final AppUserCubit _appUserCubit;
   final Logger _logger;
 
   HomeBloc({
     required HomeRepository homeRepository,
+    required HomeCubit homeCubit,
     required AppUserCubit appUserCubit,
     required Logger logger,
   })  : _homeRepository = homeRepository,
+        _homeCubit = homeCubit,
         _appUserCubit = appUserCubit,
         _logger = logger,
         super(HomeInitial()) {
@@ -84,14 +89,43 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     Emitter<HomeState> emit,
   ) async {
     try {
-      final events = await _homeRepository.getMyEvents(event.userId);
-      if (events is DataSuccess) {
-        emit(HomeEventLoaded(events: events.data!));
+      final eventsResponse = await _homeRepository.getMyEvents(event.userId);
+
+      if (eventsResponse is DataSuccess) {
+        final eventIds = eventsResponse.data!.map((event) => event.id).toList();
+        final joinedEventsFuture = Future.wait(
+            eventIds.map((eventId) async => _joinEventData(eventId)));
+        final joinedEvents = await joinedEventsFuture;
+
+        
+
+        emit(HomeEventLoaded(events: joinedEvents));
       } else {
         emit(HomeError(error: 'Error fetching my events'));
       }
     } catch (e) {
       emit(HomeError(error: 'Error fetching my events: $e'));
+    }
+  }
+
+  Future<JoinedEventsModel> _joinEventData(String eventId) async {
+    final event = await _homeRepository.getEventDetails(eventId);
+    final members = await _homeRepository.getEventMembers(eventId);
+
+    if (event is DataSuccess && members is DataSuccess) {
+      final joinedEvents = JoinedEventsModel(
+        event: event.data!,
+        members: members.data!,
+      );
+      _logger.i("Joined Events: ${joinedEvents.toJson().toString()}");
+      return JoinedEventsModel(
+        event: event.data!,
+        members: members.data!,
+      );
+    } else {
+      print("Error Joining datas");
+      _logger.e("Error Joining datas");
+      return JoinedEventsModel.empty();
     }
   }
 

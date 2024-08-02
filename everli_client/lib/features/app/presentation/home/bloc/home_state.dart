@@ -25,7 +25,7 @@ final class HomeUserLoaded extends HomeState {
 }
 
 final class HomeEventLoaded extends HomeState {
-  final List<MyEvent> events;
+  final List<JoinedEventsModel> events;
 
   HomeEventLoaded({required this.events});
 }

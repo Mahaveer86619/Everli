@@ -69,6 +69,17 @@ class MyEvent {
     );
   }
 
+  factory MyEvent.empty() => MyEvent(
+      id: '',
+      creatorId: '',
+      title: '',
+      description: '',
+      imageUrl: '',
+      tags: [],
+      createdAt: '',
+      updatedAt: '',
+    );
+
   @override
   String toString() {
     return '''

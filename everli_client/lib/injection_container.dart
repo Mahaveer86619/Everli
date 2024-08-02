@@ -80,6 +80,7 @@ Future<void> registerDependencies() async {
   sl.registerFactory<HomeBloc>(() => HomeBloc(
         appUserCubit: sl<AppUserCubit>(),
         homeRepository: sl<HomeRepository>(),
+        homeCubit: sl<HomeCubit>(),
         logger: sl<Logger>(),
       ));
   sl.registerFactory<HomeCubit>(() => HomeCubit(

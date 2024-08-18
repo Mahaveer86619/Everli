@@ -30,9 +30,7 @@ class AppUserCubit extends Cubit<AppUserState> {
 
   Future<void> authenticateUser(String firebaseUid) async {
     final resp = await _appUserRepository.getUser(firebaseUid);
-    print(resp);
     if (resp is DataSuccess) {
-      print(resp.data);
       saveUserDetails(resp.data!);
       emit(AppUserAuthenticated());
     } else {

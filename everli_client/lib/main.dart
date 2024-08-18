@@ -3,7 +3,6 @@ import 'package:everli_client/core/common/notifications/notifications.dart';
 import 'package:everli_client/core/themes/theme.dart';
 import 'package:everli_client/features/app/presentation/chat/bloc/chat_bloc.dart';
 import 'package:everli_client/features/app/presentation/home/bloc/home_bloc.dart';
-import 'package:everli_client/features/app/presentation/home/cubit/home_cubit.dart';
 import 'package:everli_client/features/app/presentation/profile/bloc/profile_bloc.dart';
 import 'package:everli_client/features/app/presentation/todo/bloc/assignment_bloc.dart';
 import 'package:everli_client/features/auth/bloc/auth_bloc.dart';
@@ -60,9 +59,6 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<HomeBloc>(
           create: (context) => di.sl<HomeBloc>(),
-        ),
-        BlocProvider<HomeCubit>(
-          create: (context) => di.sl<HomeCubit>(),
         ),
         BlocProvider<AssignmentBloc>(
           create: (context) => di.sl<AssignmentBloc>(),

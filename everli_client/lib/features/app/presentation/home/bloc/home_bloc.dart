@@ -3,9 +3,7 @@ import 'package:everli_client/core/common/models/app_user.dart';
 import 'package:everli_client/core/resources/data_state.dart';
 import 'package:everli_client/core/common/models/assignments.dart';
 import 'package:everli_client/core/common/models/checkpoint.dart';
-import 'package:everli_client/core/common/models/event.dart';
 import 'package:everli_client/features/app/model/joined_events.dart';
-import 'package:everli_client/features/app/presentation/home/cubit/home_cubit.dart';
 import 'package:everli_client/features/app/presentation/home/repository/home_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
@@ -15,27 +13,20 @@ part 'home_state.dart';
 
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final HomeRepository _homeRepository;
-  final HomeCubit _homeCubit;
   final AppUserCubit _appUserCubit;
   final Logger _logger;
 
   HomeBloc({
     required HomeRepository homeRepository,
-    required HomeCubit homeCubit,
     required AppUserCubit appUserCubit,
     required Logger logger,
   })  : _homeRepository = homeRepository,
-        _homeCubit = homeCubit,
         _appUserCubit = appUserCubit,
         _logger = logger,
         super(HomeInitial()) {
     on<HomeEvent>((_, emit) => emit(HomeLoading()));
     on<FetchAll>(_fetchAll);
     on<FetchAppUser>(_fetchAppUser);
-    on<FetchMyEvents>(_fetchMyEvents);
-    on<FetchEventMembers>(_fetchEventMembers);
-    on<FetchMyAssignments>(_fetchMyAssignments);
-    on<FetchMyCheckpoints>(_fetchMyCheckpoints);
   }
 
   Future<void> _fetchAll(
@@ -43,29 +34,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     Emitter<HomeState> emit,
   ) async {
     try {
-      final eventsResponse = await _homeRepository.getMyEvents(
-        event.userId,
-      );
-      final assignmentsResponse = await _homeRepository.getMyAssignments(
-        event.userId,
-      );
-      final checkpointsResponse = await _homeRepository.getMyCheckpoints(
-        event.userId,
-      );
-      if (eventsResponse is DataSuccess &&
-          assignmentsResponse is DataSuccess &&
-          checkpointsResponse is DataSuccess) {
-        final events = eventsResponse.data!;
-        final assignments = assignmentsResponse.data!;
-        final checkpoints = checkpointsResponse.data!;
-        emit(HomeLoaded(
-          events: events,
-          assignments: assignments,
-          checkpoints: checkpoints,
-        ));
-      } else {
-        emit(HomeError(error: 'Error fetching data'));
-      }
+      final events = await _fetchMyEvents(event.userId);
+      final assignments = await _fetchMyAssignments(event.userId);
+      final urgentAssignments = _getUrgentAssignments(assignments);
+
+      emit(HomeLoaded(
+        events: events,
+        assignments: urgentAssignments,
+      ));
     } catch (e) {
       _logger.e(e.toString());
       emit(HomeError(error: 'Error fetching data: $e'));
@@ -84,12 +60,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     }
   }
 
-  Future<void> _fetchMyEvents(
-    FetchMyEvents event,
-    Emitter<HomeState> emit,
-  ) async {
+  Future<List<JoinedEventsModel>> _fetchMyEvents(String userId) async {
     try {
-      final eventsResponse = await _homeRepository.getMyEvents(event.userId);
+      final eventsResponse = await _homeRepository.getMyEvents(userId);
 
       if (eventsResponse is DataSuccess) {
         final eventIds = eventsResponse.data!.map((event) => event.id).toList();
@@ -97,14 +70,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
             eventIds.map((eventId) async => _joinEventData(eventId)));
         final joinedEvents = await joinedEventsFuture;
 
-        
-
-        emit(HomeEventLoaded(events: joinedEvents));
+        return joinedEvents;
       } else {
-        emit(HomeError(error: 'Error fetching my events'));
+        _logger.e("Error fetching my events");
+        return [];
       }
     } catch (e) {
-      emit(HomeError(error: 'Error fetching my events: $e'));
+      _logger.e("Error fetching my assignments: $e");
+      return [];
     }
   }
 
@@ -123,57 +96,35 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         members: members.data!,
       );
     } else {
-      print("Error Joining datas");
       _logger.e("Error Joining datas");
       return JoinedEventsModel.empty();
     }
   }
 
-  Future<void> _fetchEventMembers(
-    FetchEventMembers event,
-    Emitter<HomeState> emit,
-  ) async {
-    try {
-      final members = await _homeRepository.getEventMembers(event.eventId);
-      if (members is DataSuccess) {
-        emit(HomeEventMembersLoaded(members: members.data!));
-      } else {
-        emit(HomeError(error: 'Error fetching event members'));
-      }
-    } catch (e) {
-      emit(HomeError(error: 'Error fetching event members: $e'));
-    }
+  List<MyAssignment> _getUrgentAssignments(List<MyAssignment> assignments) {
+    final now = DateTime.now();
+    final tomorrow = now.add(const Duration(days: 1));
+
+    return assignments
+        .where((assignment) =>
+            assignment.dueDate.isBefore(now) ||
+            assignment.dueDate.isAtSameMomentAs(now) ||
+            assignment.dueDate.isAtSameMomentAs(tomorrow))
+        .toList()
+      ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
   }
 
-  Future<void> _fetchMyAssignments(
-    FetchMyAssignments event,
-    Emitter<HomeState> emit,
-  ) async {
+  Future<List<MyAssignment>> _fetchMyAssignments(String userId) async {
     try {
-      final assignments = await _homeRepository.getMyAssignments(event.userId);
+      final assignments = await _homeRepository.getMyAssignments(userId);
       if (assignments is DataSuccess) {
-        emit(HomeAssignmentsLoaded(assignments: assignments.data!));
+        return assignments.data!;
       } else {
-        emit(HomeError(error: 'Error fetching my assignments'));
+        return [];
       }
     } catch (e) {
-      emit(HomeError(error: 'Error fetching my assignments: $e'));
-    }
-  }
-
-  Future<void> _fetchMyCheckpoints(
-    FetchMyCheckpoints event,
-    Emitter<HomeState> emit,
-  ) async {
-    try {
-      final checkpoints = await _homeRepository.getMyCheckpoints(event.userId);
-      if (checkpoints is DataSuccess) {
-        emit(HomeCheckpointsLoaded(checkpoints: checkpoints.data!));
-      } else {
-        emit(HomeError(error: 'Error fetching my checkpoints'));
-      }
-    } catch (e) {
-      emit(HomeError(error: 'Error fetching my checkpoints: $e'));
+      _logger.e("Error fetching my assignments: $e");
+      return [];
     }
   }
 }

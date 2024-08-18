@@ -27,7 +27,8 @@ class JoinedEventsModel {
 
   JoinedEventsModel.fromJson(Map<String, dynamic> json)
       : event = MyEvent.fromJson(json['event']),
-        members = List<AppUser>.from(json['members'].map((x) => AppUser.fromJson(x)));
+        members =
+            List<AppUser>.from(json['members'].map((x) => AppUser.fromJson(x)));
 
   Map<String, dynamic> toJson() {
     return {
@@ -38,6 +39,11 @@ class JoinedEventsModel {
 
   @override
   String toString() {
-    return 'JoinedEventsModel(event: $event, members: $members)';
+    return '''
+    JoinedEventsModel(
+    event: $event,
+    members: $members
+    )
+    ''';
   }
 }

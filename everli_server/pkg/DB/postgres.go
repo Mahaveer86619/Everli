@@ -64,6 +64,7 @@ func CreateTables(conn *sql.DB) error {
 			description TEXT,
 			due_date TEXT,
 			status TEXT,
+			is_completed BOOLEAN,
   			created_at TEXT,
   			updated_at TEXT
 		);`,

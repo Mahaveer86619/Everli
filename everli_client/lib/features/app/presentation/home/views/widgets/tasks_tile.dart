@@ -1,3 +1,4 @@
+import 'package:everli_client/core/common/constants/app_constants.dart';
 import 'package:everli_client/core/resources/helpers.dart';
 import 'package:everli_client/core/common/models/assignments.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,19 @@ class TasksTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String status = "";
+    switch (checkDateTimeStatus(assignment.dueDate.toIso8601String())) {
+      case DateTimeStatus.within24Hours:
+        status = 'Due in 24 hours';
+        break;
+      case DateTimeStatus.past:
+        status = 'Pending';
+        break;
+      case DateTimeStatus.future:
+        status = 'Due in future';
+        break;
+    }
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
@@ -28,10 +42,7 @@ class TasksTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              formatString(
-                assignment.goal,
-                25,
-              ),
+              formatString(assignment.goal, 25),
               style: Theme.of(context).textTheme.titleMedium!.copyWith(
                     fontSize: 18,
                     color: Theme.of(context)
@@ -41,10 +52,7 @@ class TasksTile extends StatelessWidget {
                   ),
             ),
             Text(
-              formatString(
-                assignment.description,
-                40,
-              ),
+              formatString(assignment.description, 40),
               style: Theme.of(context).textTheme.titleMedium!.copyWith(
                     fontSize: 12,
                     color: Theme.of(context)
@@ -59,15 +67,37 @@ class TasksTile extends StatelessWidget {
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
             ),
             const SizedBox(height: 8),
-            Text(
-              formatDate(assignment.dueDate.toIso8601String()),
-              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                    fontSize: 12,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withOpacity(0.4),
-                  ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(formatDate(assignment.dueDate.toIso8601String()),
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                          fontSize: 12,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.4),
+                        )),
+                Text(status,
+                    style: (checkDateTimeStatus(
+                                assignment.dueDate.toIso8601String())) ==
+                            DateTimeStatus.past
+                        ? Theme.of(context).textTheme.bodyMedium!.copyWith(
+                              fontSize: 12,
+                              color: Colors.red[400],
+                            )
+                        : (checkDateTimeStatus(
+                                    assignment.dueDate.toIso8601String())) ==
+                                DateTimeStatus.within24Hours
+                            ? Theme.of(context).textTheme.bodyMedium!.copyWith(
+                                  fontSize: 12,
+                                  color: Colors.yellow[400],
+                                )
+                            : Theme.of(context).textTheme.bodyMedium!.copyWith(
+                                  fontSize: 12,
+                                  color: Colors.green[400],
+                                )),
+              ],
             ),
           ],
         ),

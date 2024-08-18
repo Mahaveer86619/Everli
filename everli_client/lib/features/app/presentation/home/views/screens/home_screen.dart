@@ -1,11 +1,11 @@
 import 'package:everli_client/core/common/models/app_user.dart';
 import 'package:everli_client/core/common/widgets/error_screen.dart';
-import 'package:everli_client/core/common/widgets/loading_screen.dart';
 import 'package:everli_client/core/common/models/assignments.dart';
-import 'package:everli_client/core/common/models/event.dart';
 import 'package:everli_client/core/resources/helpers.dart';
+import 'package:everli_client/features/app/model/joined_events.dart';
 import 'package:everli_client/features/app/presentation/home/bloc/home_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:everli_client/features/app/presentation/home/views/widgets/join_event_button.dart';
 import 'package:everli_client/features/app/presentation/home/views/widgets/project_tile.dart';
 import 'package:everli_client/features/app/presentation/home/views/widgets/tasks_tile.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +19,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final int taskCount = 3;
   AppUser user = AppUser.empty();
 
   _changeScreen(Widget screen) {
@@ -63,13 +62,11 @@ class _HomeScreenState extends State<HomeScreen> {
             user = state.user;
 
             context.read<HomeBloc>().add(FetchAll(userId: user.id));
-
-            // context.read<HomeBloc>().add(FetchMyEvents(userId: user.id));
           }
         },
         builder: (context, state) {
           if (state is HomeLoading) {
-            return const LoadingScreen();
+            return _buildLoadingScreen(user);
           }
           if (state is HomeError) {
             return ErrorScreen(error: state.error);
@@ -286,87 +283,145 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  _buildProjectSection(List<MyEvent> events) {
+  _buildProjectSection(List<JoinedEventsModel> events) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Text(
-            'Events',
-            style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                  color: Theme.of(context).colorScheme.onBackground,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    'Events',
+                    style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                          color: Theme.of(context).colorScheme.onBackground,
+                        ),
+                  ),
                 ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Text(
-            '${events.length} ${events.length == 1 ? 'Event' : 'Events'} joined',
-            style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onBackground
-                      .withOpacity(0.5),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    '${events.length} ${events.length == 1 ? 'Event' : 'Events'} joined',
+                    style: Theme.of(context).textTheme.titleSmall!.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onBackground
+                              .withOpacity(0.5),
+                        ),
+                  ),
                 ),
-          ),
+              ],
+            ),
+            JoinEventButton(
+              onTap: () {
+                // _changeScreen(
+                //   const JoinEventScreen(),
+                // );
+              },
+              text: "Join event",
+            ),
+          ],
         ),
         const SizedBox(height: 16, width: double.infinity),
-        SizedBox(
-          height: 330,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: events.length,
-            itemBuilder: (context, index) {
-              int tileIndex = index % events.length;
-              MyEvent event = events[tileIndex];
-              return EventTile(event: event);
-            },
+        if (events.isEmpty)
+          SizedBox(
+            height: 270,
+            child: Center(
+              child: Text(
+                "No events joined",
+                style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onBackground
+                          .withOpacity(0.5),
+                    ),
+              ),
+            ),
           ),
-        ),
+        if (events.isNotEmpty)
+          SizedBox(
+            height: 330,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: events.length,
+              itemBuilder: (context, index) {
+                int tileIndex = index % events.length;
+                JoinedEventsModel event = events[tileIndex];
+                return EventTile(
+                  event: event,
+                  onTap: () {
+                    // _changeScreen(
+                    //   const EventScreen(
+                    //     eventId: event.event.id,
+                    //   ),
+                    // );
+                  },
+                );
+              },
+            ),
+          ),
       ],
     );
   }
 
   _buildUpcomingTasks(List<MyAssignment> assignments) {
-    final assignment = MyAssignment(
-      id: "id",
-      eventId: "eventId",
-      goal: "Onboarding Screen",
-      description: "Make Onboarding Screen of Everli app.",
-      dueDate: DateTime.now(),
-      isCompleted: false,
-    );
+    final displayedAssignments = assignments.take(5).toList();
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
-                'Upcoming tasks',
+                'Your tasks',
                 style: Theme.of(context).textTheme.titleLarge!.copyWith(
                       color: Theme.of(context).colorScheme.onBackground,
                     ),
               ),
             ),
+            if (assignments.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  'See all',
+                  style: Theme.of(context).textTheme.titleSmall!.copyWith(
+                        color: Theme.of(context).colorScheme.onBackground,
+                      ),
+                ),
+              )
           ],
         ),
         const SizedBox(
           height: 12,
           width: double.infinity,
         ),
-        TasksTile(
-          assignment: assignment,
-        ),
-        const SizedBox(height: 8),
-        TasksTile(
-          assignment: assignment,
-        ),
+        if (assignments.isEmpty)
+          SizedBox(
+            height: 180,
+            child: Center(
+              child: Text(
+                "No tasks assigned",
+                style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onBackground
+                          .withOpacity(0.5),
+                    ),
+              ),
+            ),
+          ),
+        if (assignments.isNotEmpty)
+          ...displayedAssignments.map((assignment) => TasksTile(
+                assignment: assignment,
+              )),
       ],
     );
   }

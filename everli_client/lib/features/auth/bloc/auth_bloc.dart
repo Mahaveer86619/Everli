@@ -68,7 +68,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         event.password,
       );
       
-      if (res is DataSuccess) {
+      if (res is DataSuccess) { // maybe here is the problem
         await _appUserCubit.authenticateUser(res.data!).then((value) {
           emit(SignedIn());
         });

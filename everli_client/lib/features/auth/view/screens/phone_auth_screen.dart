@@ -4,7 +4,7 @@ import 'package:everli_client/features/auth/view/screens/sign_in_screen.dart';
 import 'package:everli_client/features/auth/view/screens/sign_up_screen.dart';
 import 'package:everli_client/features/auth/view/widgets/alternate_auth_card.dart';
 import 'package:everli_client/features/auth/view/widgets/submit_btn.dart';
-import 'package:everli_client/features/auth/view/widgets/text_field.dart';
+import 'package:everli_client/core/common/widgets/text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';

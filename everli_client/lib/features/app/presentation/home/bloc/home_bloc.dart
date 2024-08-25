@@ -27,6 +27,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<HomeEvent>((_, emit) => emit(HomeLoading()));
     on<FetchAll>(_fetchAll);
     on<FetchAppUser>(_fetchAppUser);
+    on<JoinEvent>(_joinEvent);
+    on<Logout>(_logout);
   }
 
   Future<void> _fetchAll(
@@ -67,7 +69,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       if (eventsResponse is DataSuccess) {
         final eventIds = eventsResponse.data!.map((event) => event.id).toList();
         final joinedEventsFuture = Future.wait(
-            eventIds.map((eventId) async => _joinEventData(eventId)));
+            eventIds.map((eventId) async => _joinedEventData(eventId)));
         final joinedEvents = await joinedEventsFuture;
 
         return joinedEvents;
@@ -81,16 +83,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     }
   }
 
-  Future<JoinedEventsModel> _joinEventData(String eventId) async {
+  Future<JoinedEventsModel> _joinedEventData(String eventId) async {
     final event = await _homeRepository.getEventDetails(eventId);
     final members = await _homeRepository.getEventMembers(eventId);
 
     if (event is DataSuccess && members is DataSuccess) {
-      final joinedEvents = JoinedEventsModel(
-        event: event.data!,
-        members: members.data!,
-      );
-      _logger.i("Joined Events: ${joinedEvents.toJson().toString()}");
       return JoinedEventsModel(
         event: event.data!,
         members: members.data!,
@@ -126,5 +123,29 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       _logger.e("Error fetching my assignments: $e");
       return [];
     }
+  }
+
+  Future<void> _joinEvent(
+    JoinEvent event,
+    Emitter<HomeState> emit,
+  ) async {
+    try {
+      final resp = await _homeRepository.joinEvent(
+        event.userId,
+        event.code,
+      );
+      if (resp is DataSuccess) {
+        // go to event screen
+      } else {
+        emit(HomeError(error: resp.message!));
+      }
+    } catch (e) {
+      _logger.e("Error joining event: $e");
+    }
+  }
+
+  Future<void> _logout(Logout event, Emitter<HomeState> emit) async {
+    await _appUserCubit.signOut();
+    emit(HomeInitial());
   }
 }

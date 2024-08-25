@@ -46,6 +46,12 @@ final class HomeCheckpointsLoaded extends HomeState {
   HomeCheckpointsLoaded({required this.checkpoints});
 }
 
+final class EventJoined extends HomeState {
+  final JoinedEventsModel event;
+
+  EventJoined({required this.event});
+}
+
 final class HomeError extends HomeState {
   final String error;
 

@@ -3,12 +3,16 @@ class MyInvitation {
   final String code;
   final String eventId;
   final String role;
+  final String expiry;
+  final String createdAt;
 
   MyInvitation({
     required this.id,
     required this.code,
     required this.eventId,
     required this.role,
+    required this.expiry,
+    required this.createdAt,
   });
 
   factory MyInvitation.fromJson(Map<String, dynamic> json) {
@@ -17,6 +21,8 @@ class MyInvitation {
       code: json['code'],
       eventId: json['event_id'],
       role: json['role'],
+      expiry: json['expiry'],
+      createdAt: json['created_at'],
     );
   }
 
@@ -26,6 +32,8 @@ class MyInvitation {
       'code': code,
       'event_id': eventId,
       'role': role,
+      'expiry': expiry,
+      'created_at': createdAt,
     };
   }
 
@@ -34,12 +42,16 @@ class MyInvitation {
     String? code,
     String? eventId,
     String? role,
+    String? expiry,
+    String? createdAt,
   }) {
     return MyInvitation(
       id: id ?? this.id,
       code: code ?? this.code,
       eventId: eventId ?? this.eventId,
       role: role ?? this.role,
+      expiry: expiry ?? this.expiry,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
@@ -52,8 +64,19 @@ class MyInvitation {
         code: $code,
         eventId: $eventId,
         role: $role,
+        expiry: $expiry,
+        createdAt: $createdAt,
       }
 
 ''';
   }
+
+  factory MyInvitation.empty() => MyInvitation(
+        id: '',
+        code: '',
+        eventId: '',
+        role: '',
+        expiry: '',
+        createdAt: '',
+      );
 }

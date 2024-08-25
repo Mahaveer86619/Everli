@@ -1,30 +1,25 @@
 import 'package:everli_client/core/common/models/app_user.dart';
 import 'package:everli_client/core/common/widgets/error_screen.dart';
-import 'package:everli_client/core/common/widgets/text_field.dart';
-import 'package:everli_client/core/themes/pallet.dart';
 import 'package:everli_client/features/app/presentation/home/bloc/home_bloc.dart';
-import 'package:everli_client/features/app/presentation/home/views/widgets/confirm_button.dart';
-import 'package:everli_client/features/app/presentation/home/views/widgets/create_event_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class JoinEventScreen extends StatefulWidget {
-  const JoinEventScreen({super.key});
+class CreateEventScreen extends StatefulWidget {
+  const CreateEventScreen({super.key});
 
   @override
-  State<JoinEventScreen> createState() => _JoinEventScreenState();
+  State<CreateEventScreen> createState() => _CreateEventScreenState();
 }
 
-class _JoinEventScreenState extends State<JoinEventScreen> {
+class _CreateEventScreenState extends State<CreateEventScreen> {
   AppUser user = AppUser.empty();
 
-  final codeController = TextEditingController();
-
-  void _changeScreen(String routeName, {Map<String, dynamic>? arguments}) {
-    Navigator.pushReplacementNamed(
+  _changeScreen(Widget screen) {
+    Navigator.pushReplacement(
       context,
-      routeName,
-      arguments: arguments,
+      MaterialPageRoute(
+        builder: (_) => screen,
+      ),
     );
   }
 
@@ -42,18 +37,9 @@ class _JoinEventScreenState extends State<JoinEventScreen> {
     );
   }
 
-  _onJoin(String code) async {
-    context.read<HomeBloc>().add(JoinEvent(
-          userId: user.id,
-          code: code,
-        ));
-  }
-
   @override
   void initState() {
     super.initState();
-
-    context.read<HomeBloc>().add(FetchAppUser());
   }
 
   @override
@@ -93,6 +79,22 @@ class _JoinEventScreenState extends State<JoinEventScreen> {
     );
   }
 
+  _buildHeader() {
+    return AppBar(
+      automaticallyImplyLeading: true,
+      backgroundColor: Theme.of(context).colorScheme.background,
+      leading: IconButton(
+        icon: Icon(
+          Icons.arrow_back,
+          color: Theme.of(context).colorScheme.onBackground,
+        ),
+        onPressed: () {
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
   _buildLoadingScreen(AppUser user) {
     return Scaffold(
       body: SingleChildScrollView(
@@ -113,22 +115,6 @@ class _JoinEventScreenState extends State<JoinEventScreen> {
     );
   }
 
-  _buildHeader() {
-    return AppBar(
-      automaticallyImplyLeading: true,
-      backgroundColor: Theme.of(context).colorScheme.background,
-      leading: IconButton(
-        icon: Icon(
-          Icons.arrow_back,
-          color: Theme.of(context).colorScheme.onBackground,
-        ),
-        onPressed: () {
-          Navigator.pop(context);
-        },
-      ),
-    );
-  }
-
   _buildBody(HomeLoaded state) {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -140,13 +126,13 @@ class _JoinEventScreenState extends State<JoinEventScreen> {
           children: [
             const SizedBox(height: 16),
             Text(
-              'Enter Invitation code',
+              'Enter Details of the Event',
               style: Theme.of(context).textTheme.titleLarge!.copyWith(
                     color: Theme.of(context).colorScheme.onBackground,
                   ),
             ),
             Text(
-              'Enter the code sent to you by the Event Admin',
+              'Set the cover image by clicking on the box below',
               style: Theme.of(context).textTheme.titleSmall!.copyWith(
                     color: Theme.of(context)
                         .colorScheme
@@ -155,35 +141,11 @@ class _JoinEventScreenState extends State<JoinEventScreen> {
                   ),
             ),
             const SizedBox(height: 32),
-            PinCodeField(otpController: codeController),
-            const SizedBox(height: 48),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                ConfirmButton(
-                  text: 'Join',
-                  onTap: () {
-                    _onJoin(codeController.text);
-                    // after joining, go to event screen
-                  },
-                  color: Pallete.greenColor,
-                ),
-              ],
-            ),
-            const SizedBox(height: 48),
-            Divider(
-              height: 3,
-              color: Theme.of(context).colorScheme.surface,
-            ),
-            const SizedBox(height: 48),
-            CreateEventCard(
-              onTap: () {
-                _changeScreen('/home/create-event');
-              },
-            ),
           ],
         ),
       ),
     );
   }
+
+  _buildImagePicker() {}
 }

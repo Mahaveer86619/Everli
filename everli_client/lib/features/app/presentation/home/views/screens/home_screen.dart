@@ -5,6 +5,7 @@ import 'package:everli_client/core/resources/helpers.dart';
 import 'package:everli_client/features/app/model/joined_events.dart';
 import 'package:everli_client/features/app/presentation/home/bloc/home_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:everli_client/features/app/presentation/home/views/screens/join_events_screen.dart';
 import 'package:everli_client/features/app/presentation/home/views/widgets/join_event_button.dart';
 import 'package:everli_client/features/app/presentation/home/views/widgets/project_tile.dart';
 import 'package:everli_client/features/app/presentation/home/views/widgets/tasks_tile.dart';
@@ -22,7 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   AppUser user = AppUser.empty();
 
   _changeScreen(Widget screen) {
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => screen,
@@ -203,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
             debugPrint('About');
             break;
           case 2:
-            debugPrint('Logout');
+            context.read<HomeBloc>().add(Logout());
             break;
         }
       },
@@ -319,11 +320,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             JoinEventButton(
               onTap: () {
-                // _changeScreen(
-                //   const JoinEventScreen(),
-                // );
+                _changeScreen(
+                  const JoinEventScreen(),
+                );
               },
-              text: "Join event",
+              text: "Add / Join event",
             ),
           ],
         ),

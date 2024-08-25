@@ -33,3 +33,15 @@ class FetchMyCheckpoints extends HomeEvent {
 
   FetchMyCheckpoints({required this.userId});
 }
+
+class JoinEvent extends HomeEvent {
+  final String userId;
+  final String code;
+
+  JoinEvent({
+    required this.userId,
+    required this.code,
+  });
+}
+
+class Logout extends HomeEvent {}

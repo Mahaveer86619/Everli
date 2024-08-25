@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"net/http"
 
-	pkg "github.com/Mahaveer86619/Everli/pkg"
-	resp "github.com/Mahaveer86619/Everli/pkg/Response"
+	pkg "github.com/Mahaveer86619/Everli/src"
+	resp "github.com/Mahaveer86619/Everli/src/Response"
 )
 
-func CreateEventController(w http.ResponseWriter, r *http.Request) {
-	var my_event pkg.Event
-	err := json.NewDecoder(r.Body).Decode(&my_event)
+func CreateInvitationController(w http.ResponseWriter, r *http.Request) {
+	var my_invitation pkg.Invitation
+	err := json.NewDecoder(r.Body).Decode(&my_invitation)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(http.StatusBadRequest)
@@ -19,7 +19,7 @@ func CreateEventController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_event, statusCode, err := pkg.CreateEvent(&my_event)
+	pg_invitations, statusCode, err := pkg.CreateInvitation(&my_invitation)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -30,22 +30,22 @@ func CreateEventController(w http.ResponseWriter, r *http.Request) {
 
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(http.StatusCreated)
-	successResponse.SetData(pg_event)
-	successResponse.SetMessage("Event created successfully")
+	successResponse.SetData(pg_invitations)
+	successResponse.SetMessage("Invitation created successfully")
 	successResponse.JSON(w)
 }
 
-func GetEventController(w http.ResponseWriter, r *http.Request) {
-	event_id := r.URL.Query().Get("id")
-	if event_id == "" {
+func GetInvitationController(w http.ResponseWriter, r *http.Request) {
+	code := r.URL.Query().Get("code")
+	if code == "" {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(http.StatusBadRequest)
-		failureResponse.SetMessage("Invalid request body: id is required")
+		failureResponse.SetMessage("Invalid request body: code is required")
 		failureResponse.JSON(w)
 		return
 	}
 
-	pg_event, statusCode, err := pkg.GetEvent(event_id)
+	pg_invitations, statusCode, err := pkg.GetInvitation(code)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -56,31 +56,14 @@ func GetEventController(w http.ResponseWriter, r *http.Request) {
 
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(http.StatusOK)
-	successResponse.SetData(pg_event)
-	successResponse.SetMessage("Event fetched successfully")
+	successResponse.SetData(pg_invitations)
+	successResponse.SetMessage("Invitation fetched successfully")
 	successResponse.JSON(w)
 }
 
-func GetAllEventsController(w http.ResponseWriter, r *http.Request) {
-	events, statusCode, err := pkg.GetAllEvents()
-	if err != nil {
-		failureResponse := resp.Failure{}
-		failureResponse.SetStatusCode(statusCode)
-		failureResponse.SetMessage(err.Error())
-		failureResponse.JSON(w)
-		return
-	}
-
-	successResponse := &resp.Success{}
-	successResponse.SetStatusCode(statusCode)
-	successResponse.SetData(events)
-	successResponse.SetMessage("Events fetched successfully")
-	successResponse.JSON(w)
-}
-
-func UpdateEventController(w http.ResponseWriter, r *http.Request) {
-	var my_event pkg.Event
-	err := json.NewDecoder(r.Body).Decode(&my_event)
+func UpdateInvitationController(w http.ResponseWriter, r *http.Request) {
+	var my_invitation pkg.Invitation
+	err := json.NewDecoder(r.Body).Decode(&my_invitation)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(http.StatusBadRequest)
@@ -89,7 +72,7 @@ func UpdateEventController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_event, statusCode, err := pkg.UpdateEvent(&my_event)
+	pg_invitations, statusCode, err := pkg.UpdateInvitation(&my_invitation)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -100,14 +83,14 @@ func UpdateEventController(w http.ResponseWriter, r *http.Request) {
 
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(http.StatusOK)
-	successResponse.SetData(pg_event)
-	successResponse.SetMessage("Event updated successfully")
+	successResponse.SetData(pg_invitations)
+	successResponse.SetMessage("Invitation updated successfully")
 	successResponse.JSON(w)
 }
 
-func DeleteEventController(w http.ResponseWriter, r *http.Request) {
-	event_id := r.URL.Query().Get("id")
-	if event_id == "" {
+func DeleteInvitationController(w http.ResponseWriter, r *http.Request) {
+	invitation_id := r.URL.Query().Get("id")
+	if invitation_id == "" {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(http.StatusBadRequest)
 		failureResponse.SetMessage("Invalid request body: id is required")
@@ -115,7 +98,7 @@ func DeleteEventController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statusCode, err := pkg.DeleteEvent(event_id)
+	statusCode, err := pkg.DeleteInvitation(invitation_id)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -126,6 +109,6 @@ func DeleteEventController(w http.ResponseWriter, r *http.Request) {
 
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(http.StatusOK)
-	successResponse.SetMessage("Event deleted successfully")
+	successResponse.SetMessage("Invitation deleted successfully")
 	successResponse.JSON(w)
 }

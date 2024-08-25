@@ -4,9 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"math"
+	"math/rand"
 	"net/http"
+	"strconv"
 
-	db "github.com/Mahaveer86619/Everli/pkg/DB"
+	db "github.com/Mahaveer86619/Everli/src/DB"
 	"github.com/google/uuid"
 )
 
@@ -23,12 +26,13 @@ func CreateInvitation(invitation *Invitation) (*Invitation, int, error) {
 	conn := db.GetDBConnection()
 
 	query := `
-		INSERT INTO invitations (id, event_id, code, role, expiry, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
+		INSERT INTO invitations (id, event_id, code, role, expiry, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6) RETURNING *
 	`
 
 	// Generate a unique ID for the event
 	invitation.Id = uuid.New().String()
+	invitation.Code = generateRandomNumber(6)
 
 	if err := conn.QueryRow(
 		query,
@@ -40,10 +44,10 @@ func CreateInvitation(invitation *Invitation) (*Invitation, int, error) {
 		invitation.CreatedAt,
 	).Scan(
 		&invitation.Id,
-		&invitation.EventId,
 		&invitation.Code,
-		&invitation.Role,
+		&invitation.EventId,
 		&invitation.ExpiryDate,
+		&invitation.Role,
 		&invitation.CreatedAt,
 	); err != nil {
 		log.Panic(err)
@@ -67,10 +71,10 @@ func GetInvitation(code string) (*Invitation, int, error) {
 		code,
 	).Scan(
 		&invitation.Id,
-		&invitation.EventId,
 		&invitation.Code,
-		&invitation.Role,
+		&invitation.EventId,
 		&invitation.ExpiryDate,
+		&invitation.Role,
 		&invitation.CreatedAt,
 	); err != nil {
 		if err == sql.ErrNoRows {
@@ -100,10 +104,10 @@ func UpdateInvitation(invitation *Invitation) (*Invitation, int, error) {
 		invitation.Id,
 	).Scan(
 		&invitation.Id,
-		&invitation.EventId,
 		&invitation.Code,
-		&invitation.Role,
+		&invitation.EventId,
 		&invitation.ExpiryDate,
+		&invitation.Role,
 		&invitation.CreatedAt,
 	); err != nil {
 		if err == sql.ErrNoRows {
@@ -118,8 +122,8 @@ func UpdateInvitation(invitation *Invitation) (*Invitation, int, error) {
 func DeleteInvitation(invitation_id string) (int, error) {
 	conn := db.GetDBConnection()
 
-	query := `SELECT * FROM profiles WHERE id = $1`
-	del_query := "DELETE FROM profiles WHERE id = $1"
+	query := `SELECT * FROM invitations WHERE id = $1`
+	del_query := "DELETE FROM invitations WHERE id = $1"
 
 	var invitation Invitation
 	if err := conn.QueryRow(
@@ -127,10 +131,10 @@ func DeleteInvitation(invitation_id string) (int, error) {
 		invitation_id,
 	).Scan(
 		&invitation.Id,
-		&invitation.EventId,
 		&invitation.Code,
-		&invitation.Role,
+		&invitation.EventId,
 		&invitation.ExpiryDate,
+		&invitation.Role,
 		&invitation.CreatedAt,
 	); err != nil {
 		if err == sql.ErrNoRows {
@@ -146,3 +150,22 @@ func DeleteInvitation(invitation_id string) (int, error) {
 
 	return http.StatusNoContent, nil
 }
+
+func generateRandomNumber(length int) string {
+	min := int(math.Pow10(length - 1))
+	max := int(math.Pow10(length)) - 1
+	randomNumber := rand.Intn(max-min) + min
+	return strconv.Itoa(randomNumber)
+}
+
+// func printInvitation(invitation *Invitation) {
+// 	fmt.Println("invitation:")
+// 	fmt.Printf(`
+// 	ID: %s
+// 	Event ID: %s
+// 	Code: %s
+// 	Role: %s
+// 	Expiry: %s
+// 	Created At: %s
+// 	`, invitation.Id, invitation.EventId, invitation.Code, invitation.Role, invitation.ExpiryDate, invitation.CreatedAt)
+// }

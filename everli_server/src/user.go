@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	db "github.com/Mahaveer86619/Everli/pkg/DB"
+	db "github.com/Mahaveer86619/Everli/src/DB"
 	"github.com/google/uuid"
 )
 

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:everli_client/core/common/constants/app_constants.dart';
 import 'package:intl/intl.dart';
 
@@ -25,4 +27,20 @@ DateTimeStatus checkDateTimeStatus(String iso8601String) {
   } else {
     return DateTimeStatus.within24Hours;
   }
+}
+
+String getRandomDefaultBio() {
+  final random = Random();
+  final index = random.nextInt(DefaultBios.length);
+  return DefaultBios[index];
+}
+
+String getRandomSkills() {
+  final selectedSkills = DefaultSkills.toList();
+  selectedSkills.shuffle();
+  return selectedSkills.sublist(0, 3).join(", ");
+}
+
+String userRoleToString(UserRole role) {
+  return role.toString().split('.').last;
 }

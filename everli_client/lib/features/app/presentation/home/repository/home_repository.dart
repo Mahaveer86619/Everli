@@ -1,8 +1,13 @@
+library home_repository;
+
 import 'dart:convert';
+import 'package:everli_client/core/common/constants/app_constants.dart';
 import 'package:everli_client/core/common/models/app_user.dart';
 import 'package:everli_client/core/common/models/assignments.dart';
 import 'package:everli_client/core/common/models/checkpoint.dart';
+import 'package:everli_client/core/common/models/invitation.dart';
 import 'package:everli_client/core/common/models/role.dart';
+import 'package:everli_client/core/resources/helpers.dart';
 import 'package:logger/logger.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -12,8 +17,11 @@ import 'package:everli_client/core/resources/data_state.dart';
 class HomeRepository {
   final Logger _logger;
 
-  HomeRepository({required Logger logger}) : _logger = logger;
+  HomeRepository({
+    required Logger logger,
+  }) : _logger = logger;
 
+  //* Events
   Future<DataState<List<MyEvent>>> getMyEvents(
     String userId,
   ) async {
@@ -187,6 +195,7 @@ class HomeRepository {
     }
   }
 
+  //* Assignments
   Future<DataState<List<MyAssignment>>> getMyAssignments(
     String userId,
   ) async {
@@ -260,6 +269,7 @@ class HomeRepository {
     }
   }
 
+  //* Checkpoints
   Future<DataState<List<MyCheckpoint>>> getMyCheckpoints(
     String userId,
   ) async {
@@ -323,6 +333,140 @@ class HomeRepository {
       return DataSuccess(MyCheckpoint.fromJson(checkpointData), message);
     } catch (e) {
       return DataFailure(e.toString(), -1);
+    }
+  }
+
+  //* Invitations
+  Future<DataState<void>> deleteInvitation(String invitationId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse(
+          '${dotenv.get('BASE_URL')}/api/v1/invitations?id=$invitationId',
+        ),
+      );
+
+      final jsonData = jsonDecode(response.body);
+      final statusCode = jsonData['status_code'];
+      final message = jsonData['message'];
+
+      if (statusCode != 200) {
+        if (statusCode == 404) {
+          return DataFailure('No invitation found', statusCode);
+        }
+        return DataFailure(message, statusCode);
+      }
+
+      return DataSuccess(null, message);
+    } catch (e) {
+      _logger.e(e.toString());
+      return DataFailure(e.toString(), -1);
+    }
+  }
+
+  Future<DataState<MyEvent>> joinEvent(
+    String userId,
+    String code,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '${dotenv.get('BASE_URL')}/api/v1/invitations?code=$code',
+        ),
+      );
+
+      final jsonData = jsonDecode(response.body);
+      final statusCode = jsonData['status_code'];
+      final message = jsonData['message'];
+      final jData = jsonData['data'];
+
+      if (statusCode != 200) {
+        if (statusCode == 404) {
+          return DataFailure('No invitation found with code', statusCode);
+        }
+        return DataFailure(message, statusCode);
+      }
+      final invitationData = MyInvitation.fromJson(jData);
+
+      if (checkDateTimeStatus(invitationData.expiry)) {
+        String role;
+        switch (invitationData.role) {
+          case 'member':
+            role = userRoleToString(UserRole.member);
+          case 'admin':
+            role = userRoleToString(UserRole.admin);
+          case 'guest':
+            role = userRoleToString(UserRole.guest);
+          default:
+            return const DataFailure('Invalid role', 400);
+        }
+
+        final roleData = MyRole(
+          id: invitationData.id,
+          memberId: userId,
+          eventId: invitationData.eventId,
+          role: role,
+          createdAt: DateTime.now().toIso8601String(),
+          updatedAt: DateTime.now().toIso8601String(),
+        );
+
+        final resp = await addRole(roleData);
+
+        if (resp is DataSuccess) {
+          return DataSuccess(resp.data!, message);
+        } else {
+          return DataFailure(message, statusCode);
+        }
+      } else {
+        deleteInvitation(invitationData.id);
+        return const DataFailure('Invitation expired, ask for a new one', 400);
+      }
+    } catch (e) {
+      _logger.e(e.toString());
+      return DataFailure(e.toString(), -1);
+    }
+  }
+
+  Future<DataState<MyEvent>> addRole(MyRole role) async {
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '${dotenv.get('BASE_URL')}/api/v1/roles',
+        ),
+        body: const JsonEncoder().convert(role.toJson()),
+      );
+
+      final jsonData = jsonDecode(response.body);
+      final statusCode = jsonData['status_code'];
+      final message = jsonData['message'];
+      final jData = jsonData['data'];
+
+      if (statusCode != 201) {
+        return DataFailure(message, statusCode);
+      }
+
+      final eventId = jData['event_id'];
+      final eventResp = await getEventDetails(eventId);
+
+      if (eventResp is DataSuccess) {
+        return DataSuccess(eventResp.data!, message);
+      } else {
+        return DataFailure(message, statusCode);
+      }
+    } catch (e) {
+      _logger.e(e.toString());
+      return DataFailure(e.toString(), -1);
+    }
+  }
+
+  bool checkDateTimeStatus(String iso8601String) {
+    final DateTime dateTime = DateTime.parse(iso8601String);
+    final now = DateTime.now();
+    final difference = dateTime.difference(now);
+
+    if (difference.inHours > 0) {
+      return true;
+    } else {
+      return false;
     }
   }
 }

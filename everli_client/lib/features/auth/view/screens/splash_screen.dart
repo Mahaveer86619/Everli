@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:everli_client/core/common/auth_gate/auth_gate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -28,11 +27,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   void _startTimer() {
     _timer = Timer(const Duration(seconds: 3, milliseconds: 725), () {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const AuthGate(),
-        ),
-      );
+      Navigator.pushReplacementNamed(context, '/auth-gate');
     });
   }
 

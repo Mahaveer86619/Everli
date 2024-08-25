@@ -1,12 +1,12 @@
 import 'package:everli_client/core/common/cubit/app_user_cubit.dart';
 import 'package:everli_client/core/common/notifications/notifications.dart';
+import 'package:everli_client/core/common/routes/app_routes.dart';
 import 'package:everli_client/core/themes/theme.dart';
 import 'package:everli_client/features/app/presentation/chat/bloc/chat_bloc.dart';
 import 'package:everli_client/features/app/presentation/home/bloc/home_bloc.dart';
 import 'package:everli_client/features/app/presentation/profile/bloc/profile_bloc.dart';
 import 'package:everli_client/features/app/presentation/todo/bloc/assignment_bloc.dart';
 import 'package:everli_client/features/auth/bloc/auth_bloc.dart';
-import 'package:everli_client/features/auth/view/screens/splash_screen.dart';
 import 'package:everli_client/firebase_options.dart';
 import 'package:everli_client/injection_container.dart' as di;
 import 'package:firebase_core/firebase_core.dart';
@@ -75,7 +75,8 @@ class MyApp extends StatelessWidget {
         theme: lightMode,
         darkTheme: darkMode,
         debugShowCheckedModeBanner: false,
-        home: const SplashScreen(),
+        initialRoute: '/',
+        routes: routes,
       ),
     );
   }

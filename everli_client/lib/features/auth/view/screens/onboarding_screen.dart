@@ -1,4 +1,3 @@
-import 'package:everli_client/features/auth/view/screens/sign_in_screen.dart';
 import 'package:everli_client/features/auth/view/widgets/onboarding_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -11,6 +10,11 @@ class OnBoardingScreen extends StatefulWidget {
 }
 
 class _OnBoardingScreenState extends State<OnBoardingScreen> {
+
+  _changeScreen(String routeName) {
+    Navigator.pushNamed(context, routeName);
+  }
+
   List<Widget> onBoardingPages = [
     const OnBoardingCard(
       title: 'Effortlessly Achieve Your Goals Together',
@@ -56,11 +60,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const SignInScreen(),
-                        ),
-                      );
+                      _changeScreen('/sign-in');
                     },
                     child: Text(
                       'Skip',
@@ -96,11 +96,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                   GestureDetector(
                     onTap: () {
                       if (_pageController.page == onBoardingPages.length - 1) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const SignInScreen(),
-                          ),
-                        );
+                        _changeScreen('/sign-in');
                       } else {
                         _pageController.animateToPage(
                           _pageController.page!.round() + 1,

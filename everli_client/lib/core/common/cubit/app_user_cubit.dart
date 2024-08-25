@@ -28,6 +28,7 @@ class AppUserCubit extends Cubit<AppUserState> {
         _logger = logger,
         super(AppUserInitial());
 
+  //* Login
   Future<void> authenticateUser(String firebaseUid) async {
     final resp = await _appUserRepository.getUser(firebaseUid);
     if (resp is DataSuccess) {
@@ -38,6 +39,7 @@ class AppUserCubit extends Cubit<AppUserState> {
     }
   }
 
+  //* Signup
   Future<bool> createUser(AppUser user) async {
     final res = await _appUserRepository.createUser(user);
     if (res is DataSuccess) {
@@ -51,6 +53,13 @@ class AppUserCubit extends Cubit<AppUserState> {
     }
   }
 
+  //* Logout
+  Future<void> signOut() async {
+    await _sharedPreferences.remove(prefUserKey);
+    await _firebaseAuth.signOut();
+    emit(AppUserInitial());
+  }
+
   Future<void> loadUser() async {
     final userJson = _sharedPreferences.getString(prefUserKey);
     if (userJson != null) {
@@ -58,12 +67,6 @@ class AppUserCubit extends Cubit<AppUserState> {
     } else {
       emit(AppUserInitial());
     }
-  }
-
-  Future<void> signOut() async {
-    await _sharedPreferences.remove(prefUserKey);
-    await _firebaseAuth.signOut();
-    emit(AppUserInitial());
   }
 
   Future<void> saveUserDetails(AppUser user) async {
@@ -81,8 +84,13 @@ class AppUserCubit extends Cubit<AppUserState> {
 
   Future<AppUser> getUser() async {
     final userJson = _sharedPreferences.getString(prefUserKey);
-    final user = AppUser.fromJson(jsonDecode(userJson!));
-    return user;
+    if (userJson != null) {
+      final user = AppUser.fromJson(jsonDecode(userJson));
+      return user;
+    } else {
+      _logger.e('User not found in shared preferences');
+      return AppUser.empty();
+    }
   }
 
   Future<AppUser> refreshUserDetails() async {

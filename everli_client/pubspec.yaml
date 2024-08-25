@@ -43,6 +43,7 @@ dependencies:
   pinput: ^5.0.0
   country_picker: ^2.0.26
   logger: ^2.3.0
+  dotted_border: ^2.1.0
 
 dev_dependencies:
   flutter_test:

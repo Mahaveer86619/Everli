@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	pkg "github.com/Mahaveer86619/Everli/pkg"
-	resp "github.com/Mahaveer86619/Everli/pkg/Response"
+	pkg "github.com/Mahaveer86619/Everli/src"
+	resp "github.com/Mahaveer86619/Everli/src/Response"
 )
 
 func CreateUserController(w http.ResponseWriter, r *http.Request) {

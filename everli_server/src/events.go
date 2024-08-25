@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	db "github.com/Mahaveer86619/Everli/pkg/DB"
+	db "github.com/Mahaveer86619/Everli/src/DB"
 	"github.com/google/uuid"
 )
 
@@ -55,7 +55,8 @@ func CreateEvent(event *Event) (*Event, int, error) {
 		tagsStr,
 		event.CoverImageUrl,
 		event.CreatedAt,
-		event.UpdatedAt).Scan(
+		event.UpdatedAt,
+	).Scan(
 		&pg_event.Id,
 		&pg_event.CreatorId,
 		&pg_event.Name,
@@ -63,7 +64,8 @@ func CreateEvent(event *Event) (*Event, int, error) {
 		&pg_event.Tags,
 		&pg_event.CoverImageUrl,
 		&pg_event.CreatedAt,
-		&pg_event.UpdatedAt)
+		&pg_event.UpdatedAt,
+	)
 	if err != nil {
 		return nil, http.StatusInternalServerError, fmt.Errorf("error creating event: %w", err)
 	}

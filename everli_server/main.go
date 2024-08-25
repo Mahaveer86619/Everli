@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 
-	postgres "github.com/Mahaveer86619/Everli/pkg/DB"
-	handlers "github.com/Mahaveer86619/Everli/pkg/Handlers"
-	middleware "github.com/Mahaveer86619/Everli/pkg/Middleware"
+	postgres "github.com/Mahaveer86619/Everli/src/DB"
+	handlers "github.com/Mahaveer86619/Everli/src/Handlers"
+	middleware "github.com/Mahaveer86619/Everli/src/Middleware"
 	"github.com/joho/godotenv"
 )
 

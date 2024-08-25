@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	db "github.com/Mahaveer86619/Everli/pkg/DB"
+	db "github.com/Mahaveer86619/Everli/src/DB"
 	"github.com/google/uuid"
 )
 
@@ -49,6 +49,9 @@ func CreateRole(role *Role) (*Role, int, error) {
 		log.Panic(err)
 		return nil, http.StatusInternalServerError, fmt.Errorf("error creating checkpoint: %w", err)
 	}
+
+	fmt.Println("Created role:")
+	PrintRole(role)
 
 	return role, http.StatusCreated, nil
 }
@@ -216,4 +219,16 @@ func DeleteRole(role_id string) (int, error) {
 	}
 
 	return http.StatusNoContent, nil
+}
+
+func PrintRole(role *Role) {
+	fmt.Println("role:")
+	fmt.Printf(`
+	ID: %s
+	Event ID: %s
+	Member ID: %s
+	Role: %s
+	Created At: %s
+	Updated At: %s
+	`, role.Id, role.EventId, role.MemberId, role.Role, role.CreatedAt, role.UpdatedAt)
 }

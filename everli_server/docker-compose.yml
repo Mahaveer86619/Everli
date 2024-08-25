@@ -2,16 +2,32 @@ services:
   go-app:
     container_name: go-app
     build: ./
+    environment:
+      DATABASE_URL: "host=go_db user=postgres password=postgres dbname=postgres sslmode=disable"
     ports:
       - "5050:5050"
+    depends_on:
+      - go_db
 
-  # adminer:
-  #   image: adminer
-  #   container_name: go_adminer
-  #   ports:
-  #     - "8080:8080"
-  #   depends_on:
-  #     - go-app
+  go_db:
+    container_name: go_db
+    image: postgres:latest
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    container_name: go_adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - go_db
 
 networks:
   everli-network:

@@ -1,18 +1,21 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
-	pkg "github.com/Mahaveer86619/Everli/src"
-	resp "github.com/Mahaveer86619/Everli/src/Response"
+	pkg "github.com/Mahaveer86619/Everli/pkg"
+	resp "github.com/Mahaveer86619/Everli/pkg/Response"
 )
 
-func CreateAssignmentController(w http.ResponseWriter, r *http.Request) {
-	var my_assignment pkg.Assignment
-	err := json.NewDecoder(r.Body).Decode(&my_assignment)
+func CreateRoleController(w http.ResponseWriter, r *http.Request) {
+	var my_role pkg.Role
+	err := json.NewDecoder(r.Body).Decode(&my_role)
+
+	fmt.Print("Incoming role:")
+	pkg.PrintRole(&my_role)
+	
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(http.StatusBadRequest)
@@ -21,7 +24,7 @@ func CreateAssignmentController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_assignment, statusCode, err := pkg.CreateAssignment(&my_assignment)
+	pg_role, statusCode, err := pkg.CreateRole(&my_role)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -32,14 +35,14 @@ func CreateAssignmentController(w http.ResponseWriter, r *http.Request) {
 
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(http.StatusCreated)
-	successResponse.SetData(pg_assignment)
-	successResponse.SetMessage("Assignment created successfully")
+	successResponse.SetData(pg_role)
+	successResponse.SetMessage("Role created successfully")
 	successResponse.JSON(w)
 }
 
-func GetAssignmentController(w http.ResponseWriter, r *http.Request) {
-	assignment_id := r.URL.Query().Get("id")
-	if assignment_id == "" {
+func GetRoleController(w http.ResponseWriter, r *http.Request) {
+	role_id := r.URL.Query().Get("id")
+	if role_id == "" {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(http.StatusBadRequest)
 		failureResponse.SetMessage("Invalid request body: id is required")
@@ -47,7 +50,7 @@ func GetAssignmentController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	assignment, statusCode, err := pkg.GetAssignment(assignment_id)
+	pg_role, statusCode, err := pkg.GetRoleById(role_id)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -58,58 +61,23 @@ func GetAssignmentController(w http.ResponseWriter, r *http.Request) {
 
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(http.StatusOK)
-	successResponse.SetData(assignment)
-	successResponse.SetMessage("Assignment fetched successfully")
+	successResponse.SetData(pg_role)
+	successResponse.SetMessage("Role fetched successfully")
 	successResponse.JSON(w)
 }
 
-func GetAssignmentsByMemberIdController(w http.ResponseWriter, r *http.Request) {
-	member_id := r.URL.Query().Get("member_id")
-	if member_id == "" {
-		failureResponse := resp.Failure{}
-		failureResponse.SetStatusCode(http.StatusBadRequest)
-		failureResponse.SetMessage("Invalid request body: member_id is required")
-		failureResponse.JSON(w)
-		return
-	}
-
-	assignments, statusCode, err := pkg.GetAssignmentsByMemberId(member_id)
-	if err != nil {
-		failureResponse := resp.Failure{}
-		failureResponse.SetStatusCode(statusCode)
-		failureResponse.SetMessage(err.Error())
-		failureResponse.JSON(w)
-		return
-	}
-
-	successResponse := &resp.Success{}
-	successResponse.SetStatusCode(http.StatusOK)
-	successResponse.SetData(assignments)
-	successResponse.SetMessage("Assignments fetched successfully")
-	successResponse.JSON(w)
-}
-
-func GetAssignmentsByEventIdController(w http.ResponseWriter, r *http.Request) {
+func GetRolesByEventIdController(w http.ResponseWriter, r *http.Request) {
 	event_id := r.URL.Query().Get("event_id")
 	if event_id == "" {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(http.StatusBadRequest)
-		failureResponse.SetMessage("Invalid request body: event_id is required")
+		failureResponse.SetMessage("Invalid request body: id is required")
 		failureResponse.JSON(w)
 		return
 	}
 
-	assignments, statusCode, err := pkg.GetAssignmentsByEventId(event_id)
+	pg_roles, statusCode, err := pkg.GetRolesByEventId(event_id)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			fmt.Print("No assignments found 1")
-			successResponse := &resp.Success{}
-			successResponse.SetStatusCode(http.StatusOK)
-			successResponse.SetData([]pkg.Assignment{})
-			successResponse.SetMessage("Assignments fetched successfully")
-			successResponse.JSON(w)
-		}
-		fmt.Print("No assignments found 2")
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
 		failureResponse.SetMessage(err.Error())
@@ -119,14 +87,40 @@ func GetAssignmentsByEventIdController(w http.ResponseWriter, r *http.Request) {
 
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(http.StatusOK)
-	successResponse.SetData(assignments)
-	successResponse.SetMessage("Assignments fetched successfully")
+	successResponse.SetData(pg_roles)
+	successResponse.SetMessage("Roles fetched successfully")
 	successResponse.JSON(w)
 }
 
-func UpdateAssignmentController(w http.ResponseWriter, r *http.Request) {
-	var my_assignment pkg.Assignment
-	err := json.NewDecoder(r.Body).Decode(&my_assignment)
+func GetRolesByMemberIdController(w http.ResponseWriter, r *http.Request) {
+	member_id := r.URL.Query().Get("member_id")
+	if member_id == "" {
+		failureResponse := resp.Failure{}
+		failureResponse.SetStatusCode(http.StatusBadRequest)
+		failureResponse.SetMessage("Invalid request body: id is required")
+		failureResponse.JSON(w)
+		return
+	}
+
+	pg_roles, statusCode, err := pkg.GetRolesByMemberId(member_id)
+	if err != nil {
+		failureResponse := resp.Failure{}
+		failureResponse.SetStatusCode(statusCode)
+		failureResponse.SetMessage(err.Error())
+		failureResponse.JSON(w)
+		return
+	}
+
+	successResponse := &resp.Success{}
+	successResponse.SetStatusCode(http.StatusOK)
+	successResponse.SetData(pg_roles)
+	successResponse.SetMessage("Roles fetched successfully")
+	successResponse.JSON(w)
+}
+
+func UpdateRoleController(w http.ResponseWriter, r *http.Request) {
+	var my_role pkg.Role
+	err := json.NewDecoder(r.Body).Decode(&my_role)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(http.StatusBadRequest)
@@ -135,7 +129,7 @@ func UpdateAssignmentController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_assignment, statusCode, err := pkg.UpdateAssignment(&my_assignment)
+	pg_role, statusCode, err := pkg.UpdateRole(&my_role)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -146,14 +140,14 @@ func UpdateAssignmentController(w http.ResponseWriter, r *http.Request) {
 
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(http.StatusOK)
-	successResponse.SetData(pg_assignment)
-	successResponse.SetMessage("Assignment updated successfully")
+	successResponse.SetData(pg_role)
+	successResponse.SetMessage("Role updated successfully")
 	successResponse.JSON(w)
 }
 
-func DeleteAssignmentController(w http.ResponseWriter, r *http.Request) {
-	assignment_id := r.URL.Query().Get("id")
-	if assignment_id == "" {
+func DeleteRoleController(w http.ResponseWriter, r *http.Request) {
+	my_role := r.URL.Query().Get("id")
+	if my_role == "" {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(http.StatusBadRequest)
 		failureResponse.SetMessage("Invalid request body: id is required")
@@ -161,7 +155,7 @@ func DeleteAssignmentController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statusCode, err := pkg.DeleteAssignment(assignment_id)
+	statusCode, err := pkg.DeleteRole(my_role)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -172,6 +166,6 @@ func DeleteAssignmentController(w http.ResponseWriter, r *http.Request) {
 
 	successResponse := &resp.Success{}
 	successResponse.SetStatusCode(http.StatusOK)
-	successResponse.SetMessage("Assignment deleted successfully")
+	successResponse.SetMessage("Role deleted successfully")
 	successResponse.JSON(w)
 }

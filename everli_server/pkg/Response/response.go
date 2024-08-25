@@ -23,13 +23,6 @@ type Failure struct {
 	Message    string `json:"message"`
 }
 
-type SupabaseError struct {
-	Code    string `json:"code"`
-	Details string `json:"details"`
-	Hint    string `json:"hint"`
-	Message string `json:"message"`
-}
-
 func (s *Success) SetStatusCode(statusCode int) {
 	s.StatusCode = statusCode
 }
@@ -54,10 +47,6 @@ func (f *Failure) SetStatusCode(statusCode int) {
 
 func (f *Failure) SetMessage(message string) {
 	f.Message = message
-}
-
-func (f *Failure) SetData(data interface{}) {
-	// Do nothing, Failure does not use Data
 }
 
 func (f *Failure) JSON(w http.ResponseWriter) {

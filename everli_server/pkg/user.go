@@ -7,13 +7,12 @@ import (
 	"net/http"
 	"strings"
 
-	db "github.com/Mahaveer86619/Everli/src/DB"
+	db "github.com/Mahaveer86619/Everli/pkg/DB"
 	"github.com/google/uuid"
 )
 
 type MyUser struct {
 	Id           string   `json:"id"`
-	Firebase_uid string   `json:"firebase_uid"`
 	Username     string   `json:"username"`
 	Email        string   `json:"email"`
 	Bio          string   `json:"bio"`
@@ -25,7 +24,6 @@ type MyUser struct {
 
 type pg_return struct {
 	Id           string `json:"id"`
-	Firebase_uid string `json:"firebase_uid"`
 	Username     string `json:"username"`
 	Email        string `json:"email"`
 	Bio          string `json:"bio"`
@@ -39,8 +37,8 @@ func Createuser(user *MyUser) (*MyUser, int, error) {
 	conn := db.GetDBConnection()
 
 	query := `
-		INSERT INTO profiles (id, firebase_uid, username, email, avatar_url, bio, skills, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *
+		INSERT INTO profiles (id, username, email, avatar_url, bio, skills, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *
 	`
 
 	// Generate a unique ID and skillsJSON for the user
@@ -51,7 +49,6 @@ func Createuser(user *MyUser) (*MyUser, int, error) {
 	err := conn.QueryRow(
 		query,
 		user.Id,
-		user.Firebase_uid,
 		user.Username,
 		user.Email,
 		user.Avatar_url,
@@ -61,14 +58,14 @@ func Createuser(user *MyUser) (*MyUser, int, error) {
 		user.Updated_at,
 	).Scan(
 		&pg_user.Id,
-		&pg_user.Firebase_uid,
 		&pg_user.Username,
 		&pg_user.Email,
 		&pg_user.Avatar_url,
 		&pg_user.Bio,
 		&pg_user.Skills,
 		&pg_user.Created_at,
-		&pg_user.Updated_at)
+		&pg_user.Updated_at,
+	)
 
 	if err != nil {
 		log.Panic(err)
@@ -105,7 +102,6 @@ func GetAllUsers() ([]MyUser, int, error) {
 		var pg_return pg_return
 		if err := rows.Scan(
 			&pg_return.Id,
-			&pg_return.Firebase_uid,
 			&pg_return.Username,
 			&pg_return.Email,
 			&pg_return.Avatar_url,
@@ -138,13 +134,13 @@ func GetUserByID(userID string) (*MyUser, int, error) {
 	  FROM profiles
 	  WHERE id = $1
 	`
+	
 	var pg_return pg_return
 	if err := conn.QueryRow(
 		query,
 		userID,
 	).Scan(
 		&pg_return.Id,
-		&pg_return.Firebase_uid,
 		&pg_return.Username,
 		&pg_return.Email,
 		&pg_return.Avatar_url,
@@ -167,49 +163,12 @@ func GetUserByID(userID string) (*MyUser, int, error) {
 	return user, http.StatusOK, nil
 }
 
-func GetUserByFirebaseID(firebase_id string) (*MyUser, int, error) {
-	conn := db.GetDBConnection()
-
-	query := `
-	  SELECT *
-	  FROM profiles
-	  WHERE firebase_uid = $1
-	`
-	var pg_return pg_return
-	if err := conn.QueryRow(
-		query,
-		firebase_id,
-	).Scan(
-		&pg_return.Id,
-		&pg_return.Firebase_uid,
-		&pg_return.Username,
-		&pg_return.Email,
-		&pg_return.Avatar_url,
-		&pg_return.Bio,
-		&pg_return.Skills,
-		&pg_return.Created_at,
-		&pg_return.Updated_at,
-	); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, http.StatusNotFound, fmt.Errorf("user not found with firebase_uid: %s", firebase_id)
-		}
-		return nil, http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
-	}
-	// Parse skills string to slice
-	user, err := pgUserToUser(pg_return)
-	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("error converting user: %w", err)
-	}
-
-	return user, http.StatusOK, nil
-}
-
 func UpdateUser(user *MyUser) (*MyUser, int, error) {
 	conn := db.GetDBConnection()
 
 	query := `UPDATE profiles 
-	SET firebase_uid = $1, username = $2, email = $3, bio = $4, avatar_url = $5, skills = $6, created_at = $7, updated_at = $8
-	WHERE id = $9 RETURNING *
+	SET username = $1, email = $2, bio = $3, avatar_url = $4, skills = $5, created_at = $6, updated_at = $7
+	WHERE id = $8 RETURNING *
 	`
 
 	skillsStr := strings.Join(user.Skills, "|")
@@ -217,7 +176,6 @@ func UpdateUser(user *MyUser) (*MyUser, int, error) {
 
 	if err := conn.QueryRow(
 		query,
-		user.Firebase_uid,
 		user.Username,
 		user.Email,
 		user.Bio,
@@ -228,7 +186,6 @@ func UpdateUser(user *MyUser) (*MyUser, int, error) {
 		user.Id,
 	).Scan(
 		&pg_return.Id,
-		&pg_return.Firebase_uid,
 		&pg_return.Username,
 		&pg_return.Email,
 		&pg_return.Avatar_url,
@@ -263,7 +220,6 @@ func DeleteUser(userId string) (int, error) {
 		userId,
 	).Scan(
 		&pg_return.Id,
-		&pg_return.Firebase_uid,
 		&pg_return.Username,
 		&pg_return.Email,
 		&pg_return.Avatar_url,
@@ -289,7 +245,6 @@ func DeleteUser(userId string) (int, error) {
 func pgUserToUser(pg_user pg_return) (*MyUser, error) {
 	user := &MyUser{
 		Id:           pg_user.Id,
-		Firebase_uid: pg_user.Firebase_uid,
 		Username:     pg_user.Username,
 		Email:        pg_user.Email,
 		Avatar_url:   pg_user.Avatar_url,
@@ -307,7 +262,6 @@ func pgUserToUser(pg_user pg_return) (*MyUser, error) {
 func UserTopgUser(user *MyUser) (*pg_return, error) {
 	pg_user := &pg_return{
 		Id:           user.Id,
-		Firebase_uid: user.Firebase_uid,
 		Username:     user.Username,
 		Email:        user.Email,
 		Avatar_url:   user.Avatar_url,

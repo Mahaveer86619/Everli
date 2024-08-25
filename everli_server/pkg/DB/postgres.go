@@ -35,9 +35,14 @@ func CloseDBConnection(conn *sql.DB) {
 
 func CreateTables(conn *sql.DB) error {
 	queries := []string{
+		`CREATE TABLE IF NOT EXISTS auth (
+  			id UUID PRIMARY KEY,
+  			username TEXT NOT NULL,
+  			email TEXT UNIQUE NOT NULL,
+			password TEXT NOT NULL
+		);`,
 		`CREATE TABLE IF NOT EXISTS profiles (
   			id UUID PRIMARY KEY,
-			firebase_uid VARCHAR(255) UNIQUE NOT NULL,
   			username TEXT UNIQUE NOT NULL,
   			email TEXT UNIQUE NOT NULL,
   			avatar_url TEXT,

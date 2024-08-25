@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	pkg "github.com/Mahaveer86619/Everli/pkg"
+	impl "github.com/Mahaveer86619/Everli/pkg/implementations"
 	resp "github.com/Mahaveer86619/Everli/pkg/Response"
 )
 
 func CreateUserController(w http.ResponseWriter, r *http.Request) {
-	var user pkg.MyUser
+	var user impl.MyUser
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		failureResponse := resp.Failure{}
@@ -19,7 +19,7 @@ func CreateUserController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	returned_user, statusCode, err := pkg.Createuser(&user)
+	returned_user, statusCode, err := impl.Createuser(&user)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -45,7 +45,7 @@ func GetUserController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	returned_user, statusCode, err := pkg.GetUserByID(user_id)
+	returned_user, statusCode, err := impl.GetUserByID(user_id)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -71,7 +71,7 @@ func GetUserController(w http.ResponseWriter, r *http.Request) {
 // 		return
 // 	}
 
-// 	returned_user, statusCode, err := pkg.GetUserByFirebaseID(firebase_id)
+// 	returned_user, statusCode, err := impl.GetUserByFirebaseID(firebase_id)
 // 	if err != nil {
 // 		failureResponse := resp.Failure{}
 // 		failureResponse.SetStatusCode(statusCode)
@@ -88,7 +88,7 @@ func GetUserController(w http.ResponseWriter, r *http.Request) {
 // }
 
 func UpdateUserController(w http.ResponseWriter, r *http.Request) {
-	var user pkg.MyUser
+	var user impl.MyUser
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		failureResponse := resp.Failure{}
@@ -98,7 +98,7 @@ func UpdateUserController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	returned_user, statusCode, err := pkg.UpdateUser(&user)
+	returned_user, statusCode, err := impl.UpdateUser(&user)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -115,7 +115,7 @@ func UpdateUserController(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetAllUsersController(w http.ResponseWriter, r *http.Request) {
-	users, statusCode, err := pkg.GetAllUsers()
+	users, statusCode, err := impl.GetAllUsers()
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -141,7 +141,7 @@ func DeleteUserController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statusCode, err := pkg.DeleteUser(user_id)
+	statusCode, err := impl.DeleteUser(user_id)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)

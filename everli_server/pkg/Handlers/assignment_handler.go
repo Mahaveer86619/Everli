@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"net/http"
 
-	pkg "github.com/Mahaveer86619/Everli/pkg"
+	impl "github.com/Mahaveer86619/Everli/pkg/implementations"
 	resp "github.com/Mahaveer86619/Everli/pkg/Response"
 )
 
 func CreateAssignmentController(w http.ResponseWriter, r *http.Request) {
-	var my_assignment pkg.Assignment
+	var my_assignment impl.Assignment
 	err := json.NewDecoder(r.Body).Decode(&my_assignment)
 	if err != nil {
 		failureResponse := resp.Failure{}
@@ -21,7 +21,7 @@ func CreateAssignmentController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_assignment, statusCode, err := pkg.CreateAssignment(&my_assignment)
+	pg_assignment, statusCode, err := impl.CreateAssignment(&my_assignment)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -47,7 +47,7 @@ func GetAssignmentController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	assignment, statusCode, err := pkg.GetAssignment(assignment_id)
+	assignment, statusCode, err := impl.GetAssignment(assignment_id)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -73,7 +73,7 @@ func GetAssignmentsByMemberIdController(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	assignments, statusCode, err := pkg.GetAssignmentsByMemberId(member_id)
+	assignments, statusCode, err := impl.GetAssignmentsByMemberId(member_id)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -99,13 +99,13 @@ func GetAssignmentsByEventIdController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	assignments, statusCode, err := pkg.GetAssignmentsByEventId(event_id)
+	assignments, statusCode, err := impl.GetAssignmentsByEventId(event_id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			fmt.Print("No assignments found 1")
 			successResponse := &resp.Success{}
 			successResponse.SetStatusCode(http.StatusOK)
-			successResponse.SetData([]pkg.Assignment{})
+			successResponse.SetData([]impl.Assignment{})
 			successResponse.SetMessage("Assignments fetched successfully")
 			successResponse.JSON(w)
 		}
@@ -125,7 +125,7 @@ func GetAssignmentsByEventIdController(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateAssignmentController(w http.ResponseWriter, r *http.Request) {
-	var my_assignment pkg.Assignment
+	var my_assignment impl.Assignment
 	err := json.NewDecoder(r.Body).Decode(&my_assignment)
 	if err != nil {
 		failureResponse := resp.Failure{}
@@ -135,7 +135,7 @@ func UpdateAssignmentController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_assignment, statusCode, err := pkg.UpdateAssignment(&my_assignment)
+	pg_assignment, statusCode, err := impl.UpdateAssignment(&my_assignment)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -161,7 +161,7 @@ func DeleteAssignmentController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statusCode, err := pkg.DeleteAssignment(assignment_id)
+	statusCode, err := impl.DeleteAssignment(assignment_id)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)

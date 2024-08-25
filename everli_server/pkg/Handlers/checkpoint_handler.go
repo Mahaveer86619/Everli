@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	pkg "github.com/Mahaveer86619/Everli/pkg"
+	impl "github.com/Mahaveer86619/Everli/pkg/implementations"
 	resp "github.com/Mahaveer86619/Everli/pkg/Response"
 )
 
 func CreateCheckpointController(w http.ResponseWriter, r *http.Request) {
-	var my_checkpoint pkg.Checkpoint
+	var my_checkpoint impl.Checkpoint
 	err := json.NewDecoder(r.Body).Decode(&my_checkpoint)
 	if err != nil {
 		failureResponse := resp.Failure{}
@@ -19,7 +19,7 @@ func CreateCheckpointController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_checkpoint, statusCode, err := pkg.CreateCheckpoint(&my_checkpoint)
+	pg_checkpoint, statusCode, err := impl.CreateCheckpoint(&my_checkpoint)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -45,7 +45,7 @@ func GetCheckpointController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	checkpoint, statusCode, err := pkg.GetCheckpoint(checkpoint_id)
+	checkpoint, statusCode, err := impl.GetCheckpoint(checkpoint_id)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -71,7 +71,7 @@ func GetCheckpointsByAssignmentIdController(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	checkpoints, statusCode, err := pkg.GetCheckpointsByAssignmentId(assignment_id)
+	checkpoints, statusCode, err := impl.GetCheckpointsByAssignmentId(assignment_id)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -97,7 +97,7 @@ func GetCheckpointsByMemberIdController(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	checkpoints, statusCode, err := pkg.GetCheckpointsByMemberId(member_id)
+	checkpoints, statusCode, err := impl.GetCheckpointsByMemberId(member_id)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -114,7 +114,7 @@ func GetCheckpointsByMemberIdController(w http.ResponseWriter, r *http.Request) 
 }
 
 func UpdateCheckpointController(w http.ResponseWriter, r *http.Request) {
-	var my_checkpoint pkg.Checkpoint
+	var my_checkpoint impl.Checkpoint
 	err := json.NewDecoder(r.Body).Decode(&my_checkpoint)
 	if err != nil {
 		failureResponse := resp.Failure{}
@@ -124,7 +124,7 @@ func UpdateCheckpointController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_checkpoint, statusCode, err := pkg.UpdateCheckpoint(&my_checkpoint)
+	pg_checkpoint, statusCode, err := impl.UpdateCheckpoint(&my_checkpoint)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -150,7 +150,7 @@ func DeleteCheckpointController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statusCode, err := pkg.DeleteCheckpoint(checkpoint_id)
+	statusCode, err := impl.DeleteCheckpoint(checkpoint_id)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)

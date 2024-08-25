@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	pkg "github.com/Mahaveer86619/Everli/pkg"
+	impl "github.com/Mahaveer86619/Everli/pkg/implementations"
 	resp "github.com/Mahaveer86619/Everli/pkg/Response"
 )
 
 func CreateEventController(w http.ResponseWriter, r *http.Request) {
-	var my_event pkg.Event
+	var my_event impl.Event
 	err := json.NewDecoder(r.Body).Decode(&my_event)
 	if err != nil {
 		failureResponse := resp.Failure{}
@@ -19,7 +19,7 @@ func CreateEventController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_event, statusCode, err := pkg.CreateEvent(&my_event)
+	pg_event, statusCode, err := impl.CreateEvent(&my_event)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -45,7 +45,7 @@ func GetEventController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_event, statusCode, err := pkg.GetEvent(event_id)
+	pg_event, statusCode, err := impl.GetEvent(event_id)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -62,7 +62,7 @@ func GetEventController(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetAllEventsController(w http.ResponseWriter, r *http.Request) {
-	events, statusCode, err := pkg.GetAllEvents()
+	events, statusCode, err := impl.GetAllEvents()
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -79,7 +79,7 @@ func GetAllEventsController(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateEventController(w http.ResponseWriter, r *http.Request) {
-	var my_event pkg.Event
+	var my_event impl.Event
 	err := json.NewDecoder(r.Body).Decode(&my_event)
 	if err != nil {
 		failureResponse := resp.Failure{}
@@ -89,7 +89,7 @@ func UpdateEventController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_event, statusCode, err := pkg.UpdateEvent(&my_event)
+	pg_event, statusCode, err := impl.UpdateEvent(&my_event)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -115,7 +115,7 @@ func DeleteEventController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statusCode, err := pkg.DeleteEvent(event_id)
+	statusCode, err := impl.DeleteEvent(event_id)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)

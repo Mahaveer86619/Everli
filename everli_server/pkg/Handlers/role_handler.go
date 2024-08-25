@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"net/http"
 
-	pkg "github.com/Mahaveer86619/Everli/pkg"
+	impl "github.com/Mahaveer86619/Everli/pkg/implementations"
 	resp "github.com/Mahaveer86619/Everli/pkg/Response"
 )
 
 func CreateRoleController(w http.ResponseWriter, r *http.Request) {
-	var my_role pkg.Role
+	var my_role impl.Role
 	err := json.NewDecoder(r.Body).Decode(&my_role)
 
 	fmt.Print("Incoming role:")
-	pkg.PrintRole(&my_role)
+	impl.PrintRole(&my_role)
 	
 	if err != nil {
 		failureResponse := resp.Failure{}
@@ -24,7 +24,7 @@ func CreateRoleController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_role, statusCode, err := pkg.CreateRole(&my_role)
+	pg_role, statusCode, err := impl.CreateRole(&my_role)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -50,7 +50,7 @@ func GetRoleController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_role, statusCode, err := pkg.GetRoleById(role_id)
+	pg_role, statusCode, err := impl.GetRoleById(role_id)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -76,7 +76,7 @@ func GetRolesByEventIdController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_roles, statusCode, err := pkg.GetRolesByEventId(event_id)
+	pg_roles, statusCode, err := impl.GetRolesByEventId(event_id)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -102,7 +102,7 @@ func GetRolesByMemberIdController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_roles, statusCode, err := pkg.GetRolesByMemberId(member_id)
+	pg_roles, statusCode, err := impl.GetRolesByMemberId(member_id)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -119,7 +119,7 @@ func GetRolesByMemberIdController(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateRoleController(w http.ResponseWriter, r *http.Request) {
-	var my_role pkg.Role
+	var my_role impl.Role
 	err := json.NewDecoder(r.Body).Decode(&my_role)
 	if err != nil {
 		failureResponse := resp.Failure{}
@@ -129,7 +129,7 @@ func UpdateRoleController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_role, statusCode, err := pkg.UpdateRole(&my_role)
+	pg_role, statusCode, err := impl.UpdateRole(&my_role)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -155,7 +155,7 @@ func DeleteRoleController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statusCode, err := pkg.DeleteRole(my_role)
+	statusCode, err := impl.DeleteRole(my_role)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)

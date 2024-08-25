@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	pkg "github.com/Mahaveer86619/Everli/pkg"
+	impl "github.com/Mahaveer86619/Everli/pkg/implementations"
 	resp "github.com/Mahaveer86619/Everli/pkg/Response"
 )
 
 func CreateInvitationController(w http.ResponseWriter, r *http.Request) {
-	var my_invitation pkg.Invitation
+	var my_invitation impl.Invitation
 	err := json.NewDecoder(r.Body).Decode(&my_invitation)
 	if err != nil {
 		failureResponse := resp.Failure{}
@@ -19,7 +19,7 @@ func CreateInvitationController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_invitations, statusCode, err := pkg.CreateInvitation(&my_invitation)
+	pg_invitations, statusCode, err := impl.CreateInvitation(&my_invitation)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -45,7 +45,7 @@ func GetInvitationController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_invitations, statusCode, err := pkg.GetInvitation(code)
+	pg_invitations, statusCode, err := impl.GetInvitation(code)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -62,7 +62,7 @@ func GetInvitationController(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateInvitationController(w http.ResponseWriter, r *http.Request) {
-	var my_invitation pkg.Invitation
+	var my_invitation impl.Invitation
 	err := json.NewDecoder(r.Body).Decode(&my_invitation)
 	if err != nil {
 		failureResponse := resp.Failure{}
@@ -72,7 +72,7 @@ func UpdateInvitationController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pg_invitations, statusCode, err := pkg.UpdateInvitation(&my_invitation)
+	pg_invitations, statusCode, err := impl.UpdateInvitation(&my_invitation)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -98,7 +98,7 @@ func DeleteInvitationController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statusCode, err := pkg.DeleteInvitation(invitation_id)
+	statusCode, err := impl.DeleteInvitation(invitation_id)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)

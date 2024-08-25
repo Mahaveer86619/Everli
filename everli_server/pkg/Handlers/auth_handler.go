@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	pkg "github.com/Mahaveer86619/Everli/pkg"
+	impl "github.com/Mahaveer86619/Everli/pkg/implementations"
 	resp "github.com/Mahaveer86619/Everli/pkg/Response"
 )
 
 func AuthenticateUserController(w http.ResponseWriter, r *http.Request) {
-	var creds pkg.AuthenticatingUser
+	var creds impl.AuthenticatingUser
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
 		failureResponse := resp.Failure{}
@@ -19,7 +19,7 @@ func AuthenticateUserController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	returned_creds, statusCode, err := pkg.AuthenticateUser(&creds)
+	returned_creds, statusCode, err := impl.AuthenticateUser(&creds)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -36,7 +36,7 @@ func AuthenticateUserController(w http.ResponseWriter, r *http.Request) {
 }
 
 func RegisterUserController(w http.ResponseWriter, r *http.Request) {
-	var creds pkg.RegisteringUser
+	var creds impl.RegisteringUser
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
 		failureResponse := resp.Failure{}
@@ -46,7 +46,7 @@ func RegisterUserController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	returned_creds, statusCode, err := pkg.RegisterUser(&creds)
+	returned_creds, statusCode, err := impl.RegisterUser(&creds)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)
@@ -63,7 +63,7 @@ func RegisterUserController(w http.ResponseWriter, r *http.Request) {
 }
 
 func RefreshTokenController(w http.ResponseWriter, r *http.Request) {
-	var refreshingToken pkg.RefreshingToken
+	var refreshingToken impl.RefreshingToken
 	err := json.NewDecoder(r.Body).Decode(&refreshingToken)
 	if err != nil {
 		failureResponse := resp.Failure{}
@@ -73,7 +73,7 @@ func RefreshTokenController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	returned_tokens, statusCode, err := pkg.RefreshToken(&refreshingToken)
+	returned_tokens, statusCode, err := impl.RefreshToken(&refreshingToken)
 	if err != nil {
 		failureResponse := resp.Failure{}
 		failureResponse.SetStatusCode(statusCode)

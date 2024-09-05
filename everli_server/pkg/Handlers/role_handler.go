@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	impl "github.com/Mahaveer86619/Everli/pkg/implementations"
+	impl "github.com/Mahaveer86619/Everli/pkg/Implementations"
 	resp "github.com/Mahaveer86619/Everli/pkg/Response"
 )
 

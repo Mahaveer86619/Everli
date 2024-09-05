@@ -11,6 +11,11 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Custom packages
+  responsive_layout:
+    path: packages/responsive_layout
+
+  # Online packages
   firebase_core: ^3.1.1
   firebase_auth: ^5.1.1
   firebase_storage: ^12.1.0

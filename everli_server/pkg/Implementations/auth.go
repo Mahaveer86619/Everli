@@ -3,12 +3,15 @@ package Implementations
 import (
 	"database/sql"
 	"fmt"
+	"math/rand"
 	"net/http"
 
 	db "github.com/Mahaveer86619/Everli/pkg/DB"
 	middleware "github.com/Mahaveer86619/Everli/pkg/Middleware"
-	"github.com/google/uuid"
+	services "github.com/Mahaveer86619/Everli/pkg/Services"
+
 	"github.com/dgrijalva/jwt-go"
+	"github.com/google/uuid"
 )
 
 type Credentials struct {
@@ -37,8 +40,23 @@ type RegisteringUser struct {
 	Password string `json:"password"`
 }
 
+type ForgotPassword struct {
+	ID    string `json:"id"`
+	Email string `json:"email"`
+	Code  string `json:"code"`
+}
+
+type SendPassResetCodeBody struct {
+	Email string `json:"email"`
+}
+
+type CheckResetPassCodeBody struct {
+	Code  string `json:"code"`
+	Email string `json:"email"`
+}
+
 type RefreshingToken struct {
-	TokenKey string `json:"tokenKey"`
+	TokenKey        string `json:"tokenKey"`
 	RefreshTokenKey string `json:"refreshTokenKey"`
 }
 
@@ -173,6 +191,115 @@ func RegisterUser(user *RegisteringUser) (*CredentialsToReturn, int, error) {
 	return credsToReturn, http.StatusOK, nil
 }
 
+func SendPassResetCode(email string) (int, error) {
+	conn := db.GetDBConnection()
+
+	insert_query := `
+		INSERT INTO forgot_password (id, email, code)
+		VALUES ($1, $2, $3) RETURNING *
+	`
+	select_user_query := `
+	  SELECT *
+	  FROM auth
+	  WHERE email = $1
+	`
+
+	var credentials Credentials
+
+	// Search for user in database
+	err := conn.QueryRow(
+		select_user_query,
+		email,
+	).Scan(
+		&credentials.ID,
+		&credentials.Username,
+		&credentials.Email,
+		&credentials.Password,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return http.StatusNotFound, fmt.Errorf("provided email is not registered: %s", email)
+		}
+		return http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+	}
+
+	var forgotPassword ForgotPassword
+	forgotPassword.ID = uuid.New().String()
+	forgotPassword.Email = email
+	forgotPassword.Code = gen6DigitCode()
+
+	err = conn.QueryRow(
+		insert_query,
+		forgotPassword.ID,
+		forgotPassword.Email,
+		forgotPassword.Code,
+	).Scan(
+		&forgotPassword.ID,
+		&forgotPassword.Email,
+		&forgotPassword.Code,
+	)
+
+	fmt.Println("Code: " + forgotPassword.Code)
+
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("error generating forgot password code: %w", err)
+	}
+
+	// Send email with forgot password code
+	err = services.SendBasicHTMLEmail(
+		[]string{email},
+		"Reset your password",
+		"<h1>Reset your password</h1><p>Please use the following code to reset your password:</p><p>"+forgotPassword.Code+"</p>",
+	)
+
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("error sending email: %w", err)
+	}
+
+	return http.StatusOK, nil
+}
+
+func CheckResetPassCode(code string, email string) (string, int, error) {
+	conn := db.GetDBConnection()
+
+	select_query := `
+	  SELECT *
+	  FROM forgot_password
+	  WHERE email = $1
+	`
+	del_query := "DELETE FROM forgot_password WHERE id = $1"
+
+	var forgotPassword ForgotPassword
+
+	// Search for forgot password in database
+	if err := conn.QueryRow(
+		select_query,
+		email,
+	).Scan(
+		&forgotPassword.ID,
+		&forgotPassword.Email,
+		&forgotPassword.Code,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return "", http.StatusNotFound, fmt.Errorf("forgot password row not found with email: %s", email)
+		}
+		return "", http.StatusInternalServerError, fmt.Errorf("error scanning row: %w", err)
+	}
+
+	// Delete forgot password row if code is correct
+	if forgotPassword.Code != code {
+		return "", http.StatusBadRequest, fmt.Errorf("invalid code")
+	}
+
+	_, err := conn.Exec(del_query, forgotPassword.ID)
+	if err != nil {
+		return "", http.StatusInternalServerError, fmt.Errorf("error deleting row: %w", err)
+	}
+
+	return forgotPassword.Code, http.StatusOK, nil
+}
+
 func RefreshToken(refreshingToken *RefreshingToken) (*RefreshingToken, int, error) {
 	claims := &middleware.Claims{}
 	token, err := jwt.ParseWithClaims(refreshingToken.RefreshTokenKey, claims, func(token *jwt.Token) (interface{}, error) {
@@ -194,7 +321,7 @@ func RefreshToken(refreshingToken *RefreshingToken) (*RefreshingToken, int, erro
 	}
 
 	return &RefreshingToken{
-		TokenKey: newToken,
+		TokenKey:        newToken,
 		RefreshTokenKey: newRefreshToken,
 	}, http.StatusOK, nil
 }
@@ -210,4 +337,8 @@ func genCredentialsToReturn(creds Credentials, token string, refresh_token strin
 	credsToReturn.RefreshTokenKey = refresh_token
 
 	return credsToReturn, nil
+}
+
+func gen6DigitCode() string {
+	return fmt.Sprint(rand.Intn(999999-100000) + 100000)
 }

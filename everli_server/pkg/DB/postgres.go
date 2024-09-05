@@ -41,6 +41,11 @@ func CreateTables(conn *sql.DB) error {
   			email TEXT UNIQUE NOT NULL,
 			password TEXT NOT NULL
 		);`,
+		`CREATE TABLE IF NOT EXISTS forgot_password (
+  			id UUID PRIMARY KEY,
+  			email TEXT UNIQUE NOT NULL,
+  			code TEXT UNIQUE NOT NULL
+		);`,
 		`CREATE TABLE IF NOT EXISTS profiles (
   			id UUID PRIMARY KEY,
   			username TEXT UNIQUE NOT NULL,

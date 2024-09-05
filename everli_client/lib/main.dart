@@ -35,7 +35,7 @@ Future<void> setup() async {
   final appUserCubit = di.sl<AppUserCubit>();
   await appUserCubit.loadUser();
 
-  // Test connection
+  // Test connection and make headers as json
   final response = await http.get(
     Uri.parse(
       "${dotenv.get('BASE_URL')}/",
@@ -81,5 +81,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-

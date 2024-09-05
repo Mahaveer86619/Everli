@@ -48,7 +48,7 @@ Future<void> registerDependencies() async {
         appUserRepository: sl<AppUserRepository>(),
         firebaseAuth: sl<FirebaseAuth>(),
         logger: sl<Logger>(),
-      ));
+      )); 
 
   //* Repository
   sl.registerLazySingleton<AuthRepository>(() => AuthRepository(

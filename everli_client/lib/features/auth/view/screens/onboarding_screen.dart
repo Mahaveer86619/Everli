@@ -1,6 +1,7 @@
 import 'package:everli_client/features/auth/view/widgets/onboarding_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:responsive_layout/responsive.dart';
 
 class OnBoardingScreen extends StatefulWidget {
   const OnBoardingScreen({super.key});
@@ -10,7 +11,6 @@ class OnBoardingScreen extends StatefulWidget {
 }
 
 class _OnBoardingScreenState extends State<OnBoardingScreen> {
-
   _changeScreen(String routeName) {
     Navigator.pushNamed(context, routeName);
   }
@@ -34,7 +34,6 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
           'Leverage Everli\'s smart task allocation, predictive analytics, and a virtual assistant to optimize workflows and stay ahead of challenges.',
       path: 'assets/images/onboarding_3.svg',
     ),
-// Add your new onboarding card here
     const OnBoardingCard(
       title: 'Unlock Gamified Engagement',
       description:
@@ -49,84 +48,198 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        body: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      _changeScreen('/sign-in');
-                    },
-                    child: Text(
-                      'Skip',
-                      style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                            color: Theme.of(context).colorScheme.onBackground,
-                          ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  onPageChanged: (index) {
-                    _pageController.animateToPage(
-                      index,
-                      duration: Durations.short3,
-                      curve: Curves.easeIn,
-                    );
-                  },
-                  children: onBoardingPages,
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  SmoothPageIndicator(
-                    controller: _pageController,
-                    count: onBoardingPages.length,
-                  ),
-                  const SizedBox(width: 16),
-                  GestureDetector(
-                    onTap: () {
-                      if (_pageController.page == onBoardingPages.length - 1) {
-                        _changeScreen('/sign-in');
-                      } else {
-                        _pageController.animateToPage(
-                          _pageController.page!.round() + 1,
-                          duration: Durations.short3,
-                          curve: Curves.easeIn,
-                        );
-                      }
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.tertiary,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
-                      child: Icon(
-                        Icons.arrow_forward_rounded,
-                        color: Theme.of(context).colorScheme.onTertiary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 60),
-            ],
-          ),
+        body: ResponsiveLayout(
+          smallScreen: _buildSmallScreen(context),
+          mediumScreen: _buildMediumScreen(context),
+          largeScreen: _buildLargeScreen(context),
         ),
       ),
     );
   }
+
+  _buildSmallScreen(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  _changeScreen('/sign-in');
+                },
+                child: Text(
+                  'Skip',
+                  style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                        color: Theme.of(context).colorScheme.onBackground,
+                      ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: (index) {
+                _pageController.animateToPage(
+                  index,
+                  duration: Durations.short3,
+                  curve: Curves.easeIn,
+                );
+              },
+              children: onBoardingPages,
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SmoothPageIndicator(
+                controller: _pageController,
+                count: onBoardingPages.length,
+              ),
+              const SizedBox(width: 16),
+              GestureDetector(
+                onTap: () {
+                  if (_pageController.page == onBoardingPages.length - 1) {
+                    _changeScreen('/sign-in');
+                  } else {
+                    _pageController.animateToPage(
+                      _pageController.page!.round() + 1,
+                      duration: Durations.short3,
+                      curve: Curves.easeIn,
+                    );
+                  }
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.tertiary,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  child: Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Theme.of(context).colorScheme.onTertiary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 60),
+        ],
+      ),
+    );
+  }
+
+  _buildMediumScreen(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: (index) {
+                _pageController.animateToPage(
+                  index,
+                  duration: Durations.short3,
+                  curve: Curves.easeIn,
+                );
+              },
+              children: onBoardingPages,
+            ),
+          ),
+        ],
+      )
+    );
+  }
+
+  _buildLargeScreen(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  _changeScreen('/sign-in');
+                },
+                child: Text(
+                  'Skip',
+                  style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                        color: Theme.of(context).colorScheme.onBackground,
+                      ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: (index) {
+                _pageController.animateToPage(
+                  index,
+                  duration: Durations.short3,
+                  curve: Curves.easeIn,
+                );
+              },
+              children: onBoardingPages,
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SmoothPageIndicator(
+                controller: _pageController,
+                count: onBoardingPages.length,
+              ),
+              const SizedBox(width: 16),
+              GestureDetector(
+                onTap: () {
+                  if (_pageController.page == onBoardingPages.length - 1) {
+                    _changeScreen('/sign-in');
+                  } else {
+                    _pageController.animateToPage(
+                      _pageController.page!.round() + 1,
+                      duration: Durations.short3,
+                      curve: Curves.easeIn,
+                    );
+                  }
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.tertiary,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  child: Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Theme.of(context).colorScheme.onTertiary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 60),
+        ],
+      ),
+    );
+  }
+
 }

@@ -18,7 +18,7 @@ final routes = <String, WidgetBuilder>{
   '/on-boarding': (context) => const OnBoardingScreen(),
   '/sign-in': (context) => const SignInScreen(),
   '/sign-up': (context) => const SignUpScreen(),
-  // 'forgot_password': (context) => const ForgotPasswordScreen(), // TODO: Implement Forgot Password Screen
+  // 'forgot_password': (context) => const ForgotPasswordScreen(),
   '/phone-verification': (context) => const PhoneAuthScreen(),
   '/complete-profile': (context) => const CompleteProfileScreen(),
 

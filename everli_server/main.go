@@ -65,6 +65,8 @@ func handleFunctions(mux *http.ServeMux) {
 	//* Auth routes
 	mux.HandleFunc("POST /api/v1/auth/register", middleware.LoggingMiddleware(handlers.RegisterUserController))
 	mux.HandleFunc("POST /api/v1/auth/login", middleware.LoggingMiddleware(handlers.AuthenticateUserController))
+	mux.HandleFunc("POST /api/v1/auth/forgot_password", middleware.LoggingMiddleware(handlers.SendPassResetCodeController))
+	mux.HandleFunc("POST /api/v1/auth/check_code", middleware.LoggingMiddleware(handlers.CheckResetPassCodeController))
 	mux.HandleFunc("POST /api/v1/auth/refresh", middleware.LoggingMiddleware(handlers.RefreshTokenController))
 
 	//* Users routes
@@ -112,5 +114,8 @@ func handleFunctions(mux *http.ServeMux) {
 
 	//* Dev routes
 	mux.HandleFunc("GET /api/v1/dev/users", middleware.LoggingMiddleware(handlers.GetAllUsersController))
+	mux.HandleFunc("POST /api/v1/dev/email", middleware.LoggingMiddleware(handlers.SendBasicEmailHandler))
+	mux.HandleFunc("POST /api/v1/dev/html_email", middleware.LoggingMiddleware(handlers.SendBasicHTMLEmailHandler))
+	// mux.HandleFunc("POST /api/v1/dev/template_email", middleware.LoggingMiddleware(handlers.SendTemplateEmailHandler))
 
 }

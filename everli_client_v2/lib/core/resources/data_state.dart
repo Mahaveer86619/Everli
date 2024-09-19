@@ -11,9 +11,11 @@ abstract class DataState<T> {
 }
 
 class DataSuccess<T> extends DataState<T> {
-  const DataSuccess(T data, String message) : super(data: data, message: message);
+  const DataSuccess(T data, String message)
+      : super(data: data, message: message);
 }
 
 class DataFailure<T> extends DataState<T> {
-  const DataFailure(String error, int code) : super(message: error, statusCode: code);
+  DataFailure(String message, int statusCode)
+      : super(message: message, statusCode: statusCode);
 }

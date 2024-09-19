@@ -1,3 +1,7 @@
 {
-    "cmake.sourceDirectory": "E:/Personal Projects/Fullstack dev/Everli/everli_client/linux"
+    "cmake.sourceDirectory": "E:/Personal Projects/Fullstack dev/Everli/everli_client/linux",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.stylelint": "explicit"
+    }
 }

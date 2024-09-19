@@ -5,8 +5,10 @@ String notificationChannelName = 'Everli Notifications';
 String notificationChannelDescription = 'Notifications for Everli';
 
 String prefUserKey = 'user';
-String defaultAvatarUrl =
-    'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
+String prefTokenKey = 'token';
+String prefRefreshTokenKey = 'refresh_token';
+
+const String defaultAvatarUrl = 'https://feji.us/a593ri';
 String defaultEventImageUrl =
     "https://www.9series.com/img/services/design/leading%20Mobile%20app%20design%20company%20in%20India.jpeg";
 
@@ -46,4 +48,3 @@ List<String> DefaultSkills = [
 ];
 
 enum UserRole { creator, admin, member, guest }
-

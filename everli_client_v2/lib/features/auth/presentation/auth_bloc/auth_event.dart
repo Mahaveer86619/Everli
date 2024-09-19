@@ -24,10 +24,30 @@ class SignInEvent extends AuthEvent {
   });
 }
 
-class ForgotPasswordEvent extends AuthEvent {
+class SendPassResetOtpEvent extends AuthEvent {
   final String email;
 
-  ForgotPasswordEvent({
+  SendPassResetOtpEvent({
     required this.email,
+  });
+}
+
+class VerifyOtpEvent extends AuthEvent {
+  final String code;
+  final String email;
+
+  VerifyOtpEvent({
+    required this.code,
+    required this.email,
+  });
+}
+
+class ResetPassEvent extends AuthEvent {
+  final String email;
+  final String password;
+
+  ResetPassEvent({
+    required this.email,
+    required this.password,
   });
 }

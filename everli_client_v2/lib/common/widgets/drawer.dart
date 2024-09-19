@@ -1,7 +1,9 @@
+import 'package:everli_client_v2/common/app_user_cubit/app_user_cubit_cubit.dart';
 import 'package:everli_client_v2/common/constants/app_constants.dart';
 import 'package:everli_client_v2/core/resources/helpers.dart';
 import 'package:everli_client_v2/features/auth/domain/entities/app_user_entity.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MyDrawer extends StatelessWidget {
   final AppUserEntity? appUser;
@@ -96,7 +98,9 @@ class MyDrawer extends StatelessWidget {
                 DrawerTile(
                   icon: Icons.logout,
                   title: 'Logout',
-                  onTap: () {},
+                  onTap: () {
+                    context.read<AppUserCubit>().signOut();
+                  },
                 ),
                 const SizedBox(height: 20),
               ],
@@ -123,50 +127,53 @@ class DrawerTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      height: 50,
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.secondary,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceVariant,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        height: 50,
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondary,
+                  ),
+                  width: 3,
                 ),
-                width: 3,
-              ),
-              const SizedBox(width: 20),
-              Icon(
-                icon,
-                color: theme.colorScheme.onBackground,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                formatString(title, 22),
-                style: theme.textTheme.bodyMedium!.copyWith(
+                const SizedBox(width: 20),
+                Icon(
+                  icon,
                   color: theme.colorScheme.onBackground,
                 ),
-              ),
-            ],
-          ),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.keyboard_arrow_right,
-                color: theme.colorScheme.onBackground,
-              ),
-              const SizedBox(width: 10),
-            ],
-          ),
-        ],
+                const SizedBox(width: 10),
+                Text(
+                  formatString(title, 22),
+                  style: theme.textTheme.bodyMedium!.copyWith(
+                    color: theme.colorScheme.onBackground,
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.keyboard_arrow_right,
+                  color: theme.colorScheme.onBackground,
+                ),
+                const SizedBox(width: 10),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

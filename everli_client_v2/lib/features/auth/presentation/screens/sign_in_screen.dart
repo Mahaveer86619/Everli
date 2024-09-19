@@ -23,12 +23,24 @@ class _SignInScreenState extends State<SignInScreen> {
     super.initState();
   }
 
-  void _changeScreen(String routeName, {Map<String, dynamic>? arguments}) {
-    Navigator.pushReplacementNamed(
-      context,
-      routeName,
-      arguments: arguments,
-    );
+  void _changeScreen(
+    String routeName, {
+    Map<String, dynamic>? arguments,
+    bool isReplacement = false,
+  }) {
+    if (isReplacement) {
+      Navigator.pushReplacementNamed(
+        context,
+        routeName,
+        arguments: arguments,
+      );
+    } else {
+      Navigator.pushNamed(
+        context,
+        routeName,
+        arguments: arguments,
+      );
+    }
   }
 
   void _showMessage(String message) {
@@ -183,7 +195,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                   ),
                 ],
-              )
+              ),
             ],
           ),
         ),
@@ -195,9 +207,11 @@ class _SignInScreenState extends State<SignInScreen> {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is Authenticated) {
-          _changeScreen('/auth-gate');
+          _changeScreen('/auth-gate', isReplacement: true);
         } else if (state is AuthError) {
           _showMessage(state.error);
+        } else {
+          _showMessage('Something went wrong');
         }
       },
       builder: (context, state) {
@@ -222,7 +236,7 @@ class _SignInScreenState extends State<SignInScreen> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         GestureDetector(
-          onTap: () => _changeScreen('/sign-up'),
+          onTap: () => _changeScreen('/sign-up', isReplacement: true),
           child: RichText(
             text: TextSpan(
               text: 'Don\'t have an account? ',
@@ -235,7 +249,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   text: 'Sign up',
                   style: TextStyle(
                     fontSize: theme.textTheme.titleMedium!.fontSize,
-                    color: theme.colorScheme.onTertiary,
+                    color: theme.colorScheme.onBackground,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

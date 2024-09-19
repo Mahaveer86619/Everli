@@ -67,6 +67,7 @@ func handleFunctions(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/auth/login", middleware.LoggingMiddleware(handlers.AuthenticateUserController))
 	mux.HandleFunc("POST /api/v1/auth/forgot_password", middleware.LoggingMiddleware(handlers.SendPassResetCodeController))
 	mux.HandleFunc("POST /api/v1/auth/check_code", middleware.LoggingMiddleware(handlers.CheckResetPassCodeController))
+	mux.HandleFunc("POST /api/v1/auth/update_pass", middleware.LoggingMiddleware(handlers.ResetPassController))
 	mux.HandleFunc("POST /api/v1/auth/refresh", middleware.LoggingMiddleware(handlers.RefreshTokenController))
 
 	//* Users routes

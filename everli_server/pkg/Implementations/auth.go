@@ -55,6 +55,11 @@ type CheckResetPassCodeBody struct {
 	Email string `json:"email"`
 }
 
+type ResetPassBody struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 type RefreshingToken struct {
 	TokenKey        string `json:"tokenKey"`
 	RefreshTokenKey string `json:"refreshTokenKey"`
@@ -298,6 +303,26 @@ func CheckResetPassCode(code string, email string) (string, int, error) {
 	}
 
 	return forgotPassword.Code, http.StatusOK, nil
+}
+
+func ResetPassword(email string, password string) (int, error) {
+	conn := db.GetDBConnection()
+
+	query := `
+	  UPDATE auth
+	  SET password = $1
+	  WHERE email = $2
+	`
+
+	_, err := conn.Exec(query, password, email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return http.StatusNotFound, fmt.Errorf("user not found with email: %s", email)
+		}
+		return http.StatusInternalServerError, fmt.Errorf("error updating password: %w", err)
+	}
+
+	return http.StatusOK, nil
 }
 
 func RefreshToken(refreshingToken *RefreshingToken) (*RefreshingToken, int, error) {

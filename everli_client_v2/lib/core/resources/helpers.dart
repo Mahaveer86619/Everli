@@ -35,10 +35,11 @@ String getRandomDefaultBio() {
   return DefaultBios[index];
 }
 
-String getRandomSkills() {
+List<String> getRandomSkills() {
   final selectedSkills = DefaultSkills.toList();
   selectedSkills.shuffle();
-  return selectedSkills.sublist(0, 3).join(", ");
+  // return selectedSkills.sublist(0, 3).join(", ");
+  return selectedSkills.sublist(0, 3);
 }
 
 String userRoleToString(UserRole role) {

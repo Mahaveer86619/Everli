@@ -19,12 +19,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-  void _changeScreen(String routeName, {Map<String, dynamic>? arguments}) {
-    Navigator.pushReplacementNamed(
-      context,
-      routeName,
-      arguments: arguments,
-    );
+  void _changeScreen(String routeName,
+      {Map<String, dynamic>? arguments, bool isReplacement = false}) {
+    if (isReplacement) {
+      Navigator.pushReplacementNamed(
+        context,
+        routeName,
+        arguments: arguments,
+      );
+    } else {
+      Navigator.pushReplacementNamed(
+        context,
+        routeName,
+        arguments: arguments,
+      );
+    }
   }
 
   void _showMessage(String message) {
@@ -61,33 +70,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              _buildHeader(theme),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: _buildform(theme),
-              ),
-            ],
+          _buildHeader(theme),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: _buildform(theme),
           ),
           const SizedBox(height: 120),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: _buildSignUpBtn(theme),
-              ),
-              const SizedBox(height: 60),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: _buildToSignInText(theme),
-              ),
-            ],
-          )
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: _buildSignUpBtn(theme),
+          ),
+          const SizedBox(height: 60),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: _buildToSignInText(theme),
+          ),
         ],
       ),
     );
@@ -180,7 +178,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   return null;
                 },
               ),
-              // Elevated btn
               const SizedBox(
                 height: 90,
               ),
@@ -195,7 +192,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is Authenticated) {
-          _changeScreen('/auth-gate');
+          _changeScreen('/auth-gate', isReplacement: true);
         } else if (state is AuthError) {
           _showMessage(state.error);
         }
@@ -223,7 +220,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         GestureDetector(
-          onTap: () => _changeScreen('/sign-in'),
+          onTap: () => _changeScreen('/sign-in', isReplacement: true),
           child: RichText(
             text: TextSpan(
               text: 'Already have an account? ',
@@ -236,7 +233,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   text: 'Sign in',
                   style: TextStyle(
                     fontSize: theme.textTheme.titleMedium!.fontSize,
-                    color: theme.colorScheme.primary,
+                    color: theme.colorScheme.onBackground,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

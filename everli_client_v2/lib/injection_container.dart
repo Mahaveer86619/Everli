@@ -6,7 +6,11 @@ import 'package:everli_client_v2/features/auth/data/implementations/auth_reposit
 import 'package:everli_client_v2/features/auth/data/sources/auth_data_source.dart';
 import 'package:everli_client_v2/features/auth/domain/repositories/auth_repository.dart';
 import 'package:everli_client_v2/features/auth/domain/usecases/authenticate_user.dart';
+import 'package:everli_client_v2/features/auth/domain/usecases/check_otp.dart';
+import 'package:everli_client_v2/features/auth/domain/usecases/create_user.dart';
 import 'package:everli_client_v2/features/auth/domain/usecases/register_user.dart';
+import 'package:everli_client_v2/features/auth/domain/usecases/reset_pass.dart';
+import 'package:everli_client_v2/features/auth/domain/usecases/send_pass_reset.dart';
 import 'package:everli_client_v2/features/auth/presentation/auth_bloc/auth_bloc.dart';
 import 'package:everli_client_v2/features/chat/presentation/bloc/chat_bloc.dart';
 import 'package:everli_client_v2/features/home/presentation/bloc/home_bloc.dart';
@@ -87,8 +91,28 @@ void useCases() {
       authRepository: sl(),
     ),
   );
+  sl.registerLazySingleton<CreateUserUseCase>(
+    () => CreateUserUseCase(
+      authRepository: sl(),
+    ),
+  );
   sl.registerLazySingleton<AuthenticateUserUseCase>(
     () => AuthenticateUserUseCase(
+      authRepository: sl(),
+    ),
+  );
+  sl.registerLazySingleton<SendPassResetUseCase>(
+    () => SendPassResetUseCase(
+      authRepository: sl(),
+    ),
+  );
+  sl.registerLazySingleton<CheckOtpUseCase>(
+    () => CheckOtpUseCase(
+      authRepository: sl(),
+    ),
+  );
+  sl.registerLazySingleton<ResetPassUseCase>(
+    () => ResetPassUseCase(
       authRepository: sl(),
     ),
   );
@@ -100,7 +124,11 @@ void blocs() {
       appUserCubit: sl(),
       logger: sl(),
       registerUserUseCase: sl(),
+      createUserUseCase: sl(),
       authenticateUserUseCase: sl(),
+      sendPassResetUseCase: sl(),
+      checkOtpUseCase: sl(),
+      resetPassUseCase: sl(),
     ),
   );
 

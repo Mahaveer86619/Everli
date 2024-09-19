@@ -19,7 +19,7 @@ final class AuthError extends AuthState {
   final String error;
 
   AuthError(
-    this.error,
+    this.error
   ) : super(status: AuthStatus.unauthenticated);
 }
 
@@ -30,4 +30,27 @@ final class Authenticated extends AuthState {
 
 final class CompletedProfile extends AuthState {
   const CompletedProfile() : super(status: AuthStatus.authenticated);
+}
+
+// Forgot pass
+final class SentPassResetCode extends AuthState {
+  final String email;
+
+  SentPassResetCode(this.email) : super(status: AuthStatus.unauthenticated);
+}
+
+final class VerifiedPassResetCode extends AuthState {
+  const VerifiedPassResetCode() : super(status: AuthStatus.unauthenticated);
+}
+
+final class PasswordResetSuccess extends AuthState {
+  const PasswordResetSuccess() : super(status: AuthStatus.unauthenticated);
+}
+
+final class PassResetCodeError extends AuthState {
+  final String error;
+
+  PassResetCodeError(
+    this.error
+  ) : super(status: AuthStatus.unauthenticated);
 }

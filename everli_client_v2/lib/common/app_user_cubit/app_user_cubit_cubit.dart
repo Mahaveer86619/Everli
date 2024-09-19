@@ -70,7 +70,6 @@ class AppUserCubit extends Cubit<AppUserCubitState> {
       if (userString != null) {
         return jsonDecode(userString);
       } else {
-        _logger.i('User is null');
         return null;
       }
     } catch (e) {

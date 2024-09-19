@@ -116,6 +116,33 @@ func CheckResetPassCodeController(w http.ResponseWriter, r *http.Request) {
 	successResponse.JSON(w)
 }
 
+func ResetPassController(w http.ResponseWriter, r *http.Request) {
+	var reqBody impl.ResetPassBody
+	err := json.NewDecoder(r.Body).Decode(&reqBody)
+	if err != nil {
+		failureResponse := resp.Failure{}
+		failureResponse.SetStatusCode(http.StatusBadRequest)
+		failureResponse.SetMessage("Invalid request body")
+		failureResponse.JSON(w)
+		return
+	}
+
+	statusCode, err := impl.ResetPassword(reqBody.Email, reqBody.Password)
+	if err != nil {
+		failureResponse := resp.Failure{}
+		failureResponse.SetStatusCode(statusCode)
+		failureResponse.SetMessage(err.Error())
+		failureResponse.JSON(w)
+		return
+	}
+
+	successResponse := &resp.Success{}
+	successResponse.SetStatusCode(statusCode)
+	successResponse.SetData(nil)
+	successResponse.SetMessage("Password is updated successfully")
+	successResponse.JSON(w)
+}
+
 func RefreshTokenController(w http.ResponseWriter, r *http.Request) {
 	var refreshingToken impl.RefreshingToken
 	err := json.NewDecoder(r.Body).Decode(&refreshingToken)
